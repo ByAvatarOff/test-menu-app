@@ -3,7 +3,7 @@
 
 ```shell
 git clone https://github.com/ByAvatarOff/test-menu-app.git
-cd test_menu_app
+cd test-menu-app
 ``` 
 ### Установка виртуального окружения и активация
 ```shell

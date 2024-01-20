@@ -1,5 +1,4 @@
 venv/
 /src/.env
-/migrations/versions/*
 .idea
 __pycache__/
