@@ -8,16 +8,18 @@ cd test-menu-app
 ### Установка виртуального окружения и активация
 ```shell
 python -m venv venv
-venv\scripts\activate
+venv\scripts\activate  # Активация в ОС Windows
+source venv/bin/activate  # Активация в ОС Linux
 ```
 ### Установка зависимостей
 ```shell
-pip install -r .\requirements.txt
+pip install -r requirements.txt
 ```
 ### Создание переменных окружения
 ```
 cd src
-create file .env
+echo > .env  # Создание файла в ОС Windows
+touch .env  # Создание файла в ОС Linux
 ```
 ### Скопировать и подставить значения в .env ->
 ```
