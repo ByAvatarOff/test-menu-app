@@ -3,9 +3,6 @@ version: '3'
 services:
   backend:
     container_name: backend
-    environment:
-      - DB_HOST=db
-
     networks:
       - backend_network
     build:
@@ -13,33 +10,35 @@ services:
       dockerfile: Dockerfile_main
     ports:
       - "8000:8000"
+    restart: always
+    external_links:
+      - db-pg:db-pg
+    environment:
+      - DB_HOST=db-pg
     depends_on:
-      - db
+        db:
+          condition: service_healthy
 
   db:
     image: postgres:15.1-alpine
     environment:
-      - POSTGRES_HOST=${DB_HOST}
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASS}
     networks:
       - backend_network
-    container_name: db
+    container_name: db-pg
     command: -p ${DB_PORT}
     expose:
       - ${DB_PORT}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports:
-      - ${DB_PORT}:${DB_PORT}
-    healthcheck:
-      test: [ "CMD-SHELL", 'pg_isready', '-U', 'postgres', '-d', 'test_menu' ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
 
+    healthcheck:
+      test: pg_isready -U ${DB_USER} -p ${DB_PORT}
+      interval: 5s
+      timeout: 3s
+      retries: 3
 
 networks:
   backend_network:

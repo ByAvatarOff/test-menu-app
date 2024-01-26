@@ -3,9 +3,10 @@ version: '3'
 services:
   backend:
     container_name: backend_tests
+    external_links:
+      - db-test-pg:db-test-pg
     environment:
-      - DB_HOST_TEST=db_test
-
+      - DB_HOST_TEST=db-test-pg
     networks:
       - backend_tests_network
     build:
@@ -14,31 +15,27 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db_test
+        db_test:
+          condition: service_healthy
 
   db_test:
     image: postgres:15.1-alpine
-    container_name: db_test
+    container_name: db-test-pg
     environment:
-      - POSTGRES_HOST=${DB_HOST_TEST}
       - POSTGRES_DB=${DB_NAME_TEST}
       - POSTGRES_USER=${DB_USER_TEST}
       - POSTGRES_PASSWORD=${DB_PASS_TEST}
     networks:
       - backend_tests_network
-    
     command: -p ${DB_PORT_TEST}
     expose:
       - ${DB_PORT_TEST}
-    ports:
-      - ${DB_PORT_TEST}:${DB_PORT_TEST}
-    healthcheck:
-      test: [ "CMD-SHELL", 'pg_isready', '-U', 'postgres', '-d', 'test_menu' ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
 
+    healthcheck:
+      test: pg_isready -U ${DB_USER_TEST} -p ${DB_PORT_TEST}
+      interval: 5s
+      timeout: 3s
+      retries: 3
 
 networks:
   backend_tests_network:
