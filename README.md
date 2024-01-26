@@ -1,23 +1,19 @@
 # Menu app
+## Функции в которых присутствует сложный запрос на получение submenus_count, dishes_count
+```
+src > menu > utils > set_counters_for_menu
+src > menu > utils > set_counters_for_submenu
+```
 ## Алгоритм запуска
 
 ```shell
 git clone https://github.com/ByAvatarOff/test-menu-app.git
 cd test-menu-app
-``` 
-### Установка виртуального окружения и активация
-```shell
-python -m venv venv
-venv\scripts\activate
-```
-### Установка зависимостей
-```shell
-pip install -r .\requirements.txt
 ```
 ### Создание переменных окружения
 ```
-cd src
-create file .env
+echo > .env  # Создание файла в ОС Windows
+touch .env  # Создание файла в ОС Linux
 ```
 ### Скопировать и подставить значения в .env ->
 ```
@@ -26,19 +22,19 @@ DB_PORT=<POSTGRES_PORT>
 DB_NAME=<POSTGRES_DB_NAME>
 DB_USER=<POSTGRES_USER>
 DB_PASS=<POSTGRES_PASSWORD>
+
+DB_HOST_TEST=localhost
+DB_PORT_TEST=<POSTGRES_PORT>
+DB_NAME_TEST=<POSTGRES_DB_NAME>
+DB_USER_TEST=<POSTGRES_USER>
+DB_PASS_TEST=<POSTGRES_PASSWORD>
 ```
-### Создать базу данных postgres c заданным в .env именем
-```postgresql
-CREATE DATABASE POSTGRES_DB_NAME;
+## Запуск использую docker-compose
+### Запуск тестов
+```shell
+docker-compose -f docker-compose-tests.yaml up --build
 ```
-### Создание миграций
-```
-cd ..
-alembic revision --autogenerate -m "init"
-alembic upgrade head
-```
-### Запуск сервера
-```
-cd src
-uvicorn main:app --reload
+### Запуск прилодения
+```shell
+docker-compose -f docker-compose-main.yaml up --build
 ```

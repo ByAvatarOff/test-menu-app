@@ -65,7 +65,9 @@ async def if_exists_menu_and_submenu(menu_id: uuid.UUID, submenu_id: uuid.UUID, 
     """
     Check if menu and submenu with get menu_id and submenu_id exists
     """
-    await if_exists_menu(menu_id, session)
+    menu = await if_exists_menu(menu_id, session)
+    if isinstance(menu, JSONResponse):
+        return menu
     submenu = await if_exists_submenu(submenu_id, session)
     return submenu
 
@@ -74,7 +76,9 @@ async def if_exists_submenu_and_dish(dish_id: uuid.UUID, submenu_id: uuid.UUID, 
     """
     Check if dish and submenu with get dish_id and submenu_id exists
     """
-    await if_exists_submenu(submenu_id, session)
+    submenu = await if_exists_submenu(submenu_id, session)
+    if isinstance(submenu, JSONResponse):
+        return submenu
     dish = await if_exists_dish(dish_id, session)
     return dish
 
@@ -85,10 +89,10 @@ async def set_counters_for_menu(session: AsyncSession, menu_id: uuid.UUID) -> Me
     Return updated menu schema with dishes_count and submenus_count argument
     """
     sub_query = select(Submenu.menu_id, (func.count(Dish.id)).label('dish_count')).select_from(Submenu). \
-        join(Dish).group_by(Submenu.menu_id).subquery().alias('submenu_result')
+        join(Dish).where(Submenu.menu_id == menu_id).group_by(Submenu.menu_id).subquery().alias('submenu_result')
 
     stmt = select(Menu, func.count(Submenu.menu_id).label('submenus_count'),
-                  func.coalesce(func.sum(sub_query.c.dish_count), 0).label('dishes_count')).select_from(Menu). \
+                  func.coalesce(func.max(sub_query.c.dish_count), 0).label('dishes_count')).select_from(Menu). \
         outerjoin(sub_query).where(Menu.id == menu_id).group_by(Menu.id)
 
     record: Result = await session.execute(stmt)
