@@ -34,12 +34,12 @@ DB_PASS_TEST=<POSTGRES_PASSWORD>
 ```shell
 docker-compose -f docker-compose-tests.yaml up --build
 ```
-### Запуск прилодения
+### Запуск приложения
 ```shell
 docker-compose -f docker-compose-main.yaml up --build
 ```
-### Запуск в фоновом режиме
+### Запуск приложения в фоновом режиме
 ```shell
-docker-compose -f docker-compose-tests.yaml build
-docker-compose -f docker-compose-tests.yaml start
+docker-compose -f docker-compose-main.yaml create
+docker-compose -f docker-compose-main.yaml start
 ```
