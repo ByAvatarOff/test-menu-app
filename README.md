@@ -38,3 +38,8 @@ docker-compose -f docker-compose-tests.yaml up --build
 ```shell
 docker-compose -f docker-compose-main.yaml up --build
 ```
+### Запуск в фоновом режиме
+```shell
+docker-compose -f docker-compose-tests.yaml build
+docker-compose -f docker-compose-tests.yaml start
+```
