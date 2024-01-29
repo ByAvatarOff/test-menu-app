@@ -4,33 +4,33 @@ from sqlalchemy import select, insert
 from menu.models import Submenu, Menu, Dish
 
 
-async def create_records(get_async_session):
+async def test_create_records(ac: AsyncClient):
     """
     Create records for check counters
     """
 
-    stmt = insert(Menu).values(title='string', description='string').returning(Menu)
-    menu_record = await get_async_session.execute(stmt)
-    menu_id = menu_record.scalars().first().id
+    response = await ac.post("/api/v1/menus", json={
+        "title": "My menu 1", 
+        "description": "My menu description 1"
+        })
+    menu_id = response.json().get('id', '')
 
-    submenu_data = [
-        {"title": 'string1', "description": 'string1', "menu_id": menu_id},
-        {"title": 'string2', "description": 'string2', "menu_id": menu_id}
-    ]
-    sumbenu_stmt = insert(Submenu).values(submenu_data).returning(Submenu)
-    submenu_record = await get_async_session.execute(sumbenu_stmt)
-    submenu_id = submenu_record.scalars().all()
-    dishes_data = [
-        {"title": 'string1', "description": 'string1', "price": "12.77", "submenu_id": submenu_id[0].id},
-        {"title": 'string2', "description": 'string2', "price": "12.77", "submenu_id": submenu_id[0].id},
-        {"title": 'string3', "description": 'string3', "price": "12.77", "submenu_id": submenu_id[0].id},
-        {"title": 'string4', "description": 'string4', "price": "12.77", "submenu_id": submenu_id[1].id}
-    ]
-    dish_stmt = insert(Dish).values(dishes_data).returning(Dish)
-    await get_async_session.execute(dish_stmt)
+    response = await ac.post(f"/api/v1/menus/{menu_id}/submenus", json={
+        "title": "My submenu 1", 
+        "description": "My submenu description 1",
+        })
+    submenu_id = response.json().get('id', '')
 
-    await get_async_session.commit()
-    return menu_id
+    await ac.post(f"/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes", json={
+        "title": "My dish 1", 
+        "description": "My dish description 1",
+        "price": "12.50",
+        })
+    await ac.post(f"/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes", json={
+        "title": "My dish 2", 
+        "description": "My dish description 2",
+        "price": "13.50",
+        })
 
 
 @pytest.fixture
@@ -43,10 +43,7 @@ async def get_menu_id(get_async_session):
     
     stmt = select(Menu)
     record = await get_async_session.execute(stmt)
-    menu = record.scalars().first()
-    if menu is None:
-        return await create_records(get_async_session)
-    return menu.id
+    return record.scalars().first().id
 
 
 @pytest.fixture
@@ -69,11 +66,11 @@ async def test_counters_get_menu(ac: AsyncClient, get_menu_id: str):
     response = await ac.get(f"/api/v1/menus/{get_menu_id}")
     assert response.status_code == 200
     data = response.json()
-    assert data.get('submenus_count') == 2
-    assert data.get('dishes_count') == 4
+    assert data.get('submenus_count') == 1
+    assert data.get('dishes_count') == 2
 
 
-async def test_counters_get_submenu(ac: AsyncClient, get_menu_id: str, get_submenu_id: str, get_async_session):
+async def test_counters_get_submenu(ac: AsyncClient, get_menu_id: str, get_submenu_id: str):
     """
     Check correct number in counter for submenu
     """
@@ -82,7 +79,39 @@ async def test_counters_get_submenu(ac: AsyncClient, get_menu_id: str, get_subme
     
     assert response.status_code == 200
     data = response.json()
-    assert data.get('dishes_count') == 3
+    assert data.get('dishes_count') == 2
+
+
+async def test_delete_submenu(ac: AsyncClient, get_menu_id: str, get_submenu_id: str):
+    """
+    Delete submenu
+    """
+    response = await ac.delete(f"/api/v1/menus/{get_menu_id}/submenus/{get_submenu_id}")
+    assert response.status_code == 200
+    assert response.json().get('message') == 'Success delete'
+
+
+async def test_list_submenus(ac: AsyncClient, get_menu_id: str):
+    """
+    List submenus, check response is list, check len response
+    """
+        
+    response = await ac.get(f"/api/v1/menus/{get_menu_id}/submenus")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 0
+
+
+async def test_counters_get_menu_after_delete(ac: AsyncClient, get_menu_id: str):
+    """
+    Check correct number in counters for menu
+    """
+
+    response = await ac.get(f"/api/v1/menus/{get_menu_id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert data.get('submenus_count') == 0
+    assert data.get('dishes_count') == 0
 
 
 async def test_delete_menu(ac: AsyncClient, get_menu_id: str):
@@ -93,3 +122,14 @@ async def test_delete_menu(ac: AsyncClient, get_menu_id: str):
     response = await ac.delete(f"/api/v1/menus/{get_menu_id}")
     assert response.status_code == 200
     assert response.json().get('message') == 'Success delete'
+
+
+async def test_list_menus(ac: AsyncClient):
+    """
+    List menus, check response is list, check len response
+    """
+
+    response = await ac.get("/api/v1/menus")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 0
