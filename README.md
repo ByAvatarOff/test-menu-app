@@ -70,6 +70,7 @@ docker-compose -f docker-compose-main.yaml start
 docker-compose -f docker-compose-main.yaml stop
 ```
 ### Видео демонстрация работы:
+[Test_menu_app](https://youtu.be/ikLpG94U3n8)
 
 ## Endpoints
 ## Menu
