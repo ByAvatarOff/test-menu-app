@@ -1,13 +1,17 @@
-from pydantic import BaseModel, field_validator, Field, field_serializer
+"""
+Schemas for model Menu, Submenu, Dish
+"""
+from uuid import UUID
 from decimal import InvalidOperation, Decimal
-import uuid
+from pydantic import BaseModel, field_validator, Field, field_serializer
+
 
 
 class MenuReadSchema(BaseModel):
     """
     Menu read schema
     """
-    id: uuid.UUID
+    id: UUID
     title: str
     description: str
 
@@ -18,7 +22,7 @@ class MenuWithCounterSchema(BaseModel):
     submenus_count - count related submenus,
     dishes_count - count related dishes
     """
-    id: uuid.UUID
+    id: UUID
     title: str
     description: str
     submenus_count: int = Field(default=0, alias='submenus_count')
@@ -37,7 +41,7 @@ class SubMenuReadSchema(BaseModel):
     """
     SubMenu read schema
     """
-    id: uuid.UUID
+    id: UUID
     title: str
     description: str
 
@@ -47,7 +51,7 @@ class SubMenuWithCounterSchema(BaseModel):
     SubMenu schema for view submenu with additional parameter:
     dishes_count - count related dishes
     """
-    id: uuid.UUID
+    id: UUID
     title: str
     description: str
     dishes_count: int = Field(default=0, alias='dishes_count')
@@ -65,7 +69,7 @@ class DishReadSchema(BaseModel):
     """
     Dish read schema
     """
-    id: uuid.UUID
+    id: UUID
     title: str
     description: str
     price: str
@@ -79,7 +83,7 @@ class DishReadSchema(BaseModel):
         try:
             return f"{Decimal(price):.2f}"
         except InvalidOperation:
-            raise InvalidOperation('Invalid type price')
+            raise ValueError('Invalid type price')
 
 
 class DishCreateSchema(BaseModel):
@@ -91,6 +95,7 @@ class DishCreateSchema(BaseModel):
     price: str
 
     @field_validator("price")
+    @classmethod
     def check_if_decimal_price(cls, value):
         """
         Validator check decimal value on field price

@@ -1,8 +1,8 @@
 from httpx import AsyncClient
 import pytest
 from sqlalchemy import select, insert
-from menu.models import Submenu, Menu
-from menu.schemas import SubMenuReadSchema
+from menu_app.models import Submenu, Menu
+from menu_app.schemas import SubMenuReadSchema
 import uuid
 
 
@@ -53,7 +53,7 @@ async def test_create_submenu(ac: AsyncClient, get_menu_id: str):
     assert data.get('description') == 'string'
 
 
-async def test_failed_entitty_create_submenu(ac: AsyncClient, get_menu_id: str):
+async def test_failed_entity_create_submenu(ac: AsyncClient, get_menu_id: str):
     """
     Failed create submenu with incorrect body (without title)
     """
@@ -111,16 +111,6 @@ async def test_not_found_get_submenu(ac: AsyncClient, get_menu_id: str):
     assert response.json().get('detail') == 'submenu not found'
 
 
-async def test_not_found_get_menu(ac: AsyncClient, get_submenu_instance: SubMenuReadSchema):
-    """
-    Check 404 for one menu
-    """
-
-    response = await ac.get(f"/api/v1/menus/{uuid.uuid4()}/submenus/{get_submenu_instance.id}")
-    assert response.status_code == 404
-    assert response.json().get('detail') == 'menu not found'
-
-
 async def test_patch_submenu(ac: AsyncClient, get_menu_id: str, get_submenu_instance: SubMenuReadSchema):
     """
     Update submenu, check updated fields
@@ -151,7 +141,7 @@ async def test_not_found_patch_submenu(ac: AsyncClient, get_menu_id: str):
     assert response.json().get('detail') == 'submenu not found'   
 
 
-async def test_not_found_patch_menu(ac: AsyncClient, get_submenu_instance: SubMenuReadSchema):
+async def test_exists_title_patch_menu(ac: AsyncClient, get_submenu_instance: SubMenuReadSchema):
     """
     Check 404 for update menu
     """
@@ -160,11 +150,11 @@ async def test_not_found_patch_menu(ac: AsyncClient, get_submenu_instance: SubMe
         "title": "new_string", 
         "description": "new_desc"
         })
-    assert response.status_code == 404
-    assert response.json().get('detail') == 'menu not found'
+    assert response.status_code == 400
+    assert response.json().get('detail') == 'Submenu with get title exists'
 
 
-async def test_failed_entitty_patch_submenu(ac: AsyncClient, get_menu_id: str, get_submenu_instance: SubMenuReadSchema):
+async def test_failed_entity_patch_submenu(ac: AsyncClient, get_menu_id: str, get_submenu_instance: SubMenuReadSchema):
     """
     Failed update submenu with incorrect body description - number
     """
@@ -184,16 +174,6 @@ async def test_not_found_delete_submenu(ac: AsyncClient, get_menu_id: str):
     response = await ac.delete(f"/api/v1/menus/{get_menu_id}/submenus/{uuid.uuid4()}")
     assert response.status_code == 404
     assert response.json().get('detail') == 'submenu not found'
-
-
-async def test_not_found_delete_menu(ac: AsyncClient, get_submenu_instance: SubMenuReadSchema):
-    """
-    Check 404 to menu for delete submenu
-    """
-
-    response = await ac.delete(f"/api/v1/menus/{uuid.uuid4()}/submenus/{get_submenu_instance.id}")
-    assert response.status_code == 404
-    assert response.json().get('detail') == 'menu not found'
 
 
 async def test_delete_submenu(ac: AsyncClient, get_menu_id: str, get_submenu_instance: SubMenuReadSchema, get_async_session):

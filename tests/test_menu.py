@@ -1,8 +1,8 @@
 from httpx import AsyncClient
 import pytest
 from sqlalchemy import select
-from menu.models import Menu
-from menu.schemas import MenuReadSchema
+from menu_app.models import Menu
+from menu_app.schemas import MenuReadSchema
 import uuid
 
 

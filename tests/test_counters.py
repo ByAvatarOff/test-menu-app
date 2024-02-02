@@ -1,7 +1,7 @@
 from httpx import AsyncClient
 import pytest
-from sqlalchemy import select, insert
-from menu.models import Submenu, Menu, Dish
+from sqlalchemy import select
+from menu_app.models import Submenu, Menu
 
 
 async def test_create_records(ac: AsyncClient):

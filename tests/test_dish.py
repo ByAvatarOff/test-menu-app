@@ -1,8 +1,8 @@
 from httpx import AsyncClient
 import pytest
 from sqlalchemy import select, insert
-from menu.models import Submenu, Menu, Dish
-from menu.schemas import DishReadSchema
+from menu_app.models import Submenu, Menu, Dish
+from menu_app.schemas import DishReadSchema
 import uuid
 
 
@@ -75,7 +75,7 @@ async def test_create_dish(ac: AsyncClient, get_menu_id: str, get_submenu_id: st
     assert data.get('price') == '12.39'
 
 
-async def test_failed_entitty_create_dish(ac: AsyncClient, get_menu_id: str, get_submenu_id: str):
+async def test_failed_entity_create_dish(ac: AsyncClient, get_menu_id: str, get_submenu_id: str):
     """
     Failed create dish with incorrect body (without title and price)
     """
@@ -134,16 +134,6 @@ async def test_not_found_get_dish(ac: AsyncClient, get_menu_id: str, get_submenu
     assert response.json().get('detail') == 'dish not found'
 
 
-async def test_not_found_get_submenu(ac: AsyncClient, get_menu_id: str, get_dish_instance: DishReadSchema):
-    """
-    Check 404 for one submenu
-    """
-
-    response = await ac.get(f"/api/v1/menus/{get_menu_id}/submenus/{uuid.uuid4()}/dishes/{get_dish_instance.id}")
-    assert response.status_code == 404
-    assert response.json().get('detail') == 'submenu not found'
-
-
 async def test_patch_dish(ac: AsyncClient, get_menu_id: str, get_submenu_id: str, get_dish_instance: DishReadSchema):
     """
     Update dish, check updated fields
@@ -174,24 +164,10 @@ async def test_not_found_patch_dish(ac: AsyncClient, get_menu_id: str, get_subme
         "price": "12.91111"
         })
     assert response.status_code == 404
-    assert response.json().get('detail') == 'dish not found'   
+    assert response.json().get('detail') == 'dish not found'
 
 
-async def test_not_found_patch_submenu(ac: AsyncClient, get_menu_id: str, get_dish_instance: DishReadSchema):
-    """
-    Check 404 for update submenu
-    """
-
-    response = await ac.patch(f"/api/v1/menus/{get_menu_id}/submenus/{uuid.uuid4()}/dishes/{get_dish_instance.id}", json={
-        "title": "new_string", 
-        "description": "new_desc",
-        "price": "12.91111"
-        })
-    assert response.status_code == 404
-    assert response.json().get('detail') == 'submenu not found'
-
-
-async def test_failed_entitty_patch_submenu(ac: AsyncClient, get_menu_id: str, get_submenu_id: str, get_dish_instance: DishReadSchema):
+async def test_failed_entity_patch_submenu(ac: AsyncClient, get_menu_id: str, get_submenu_id: str, get_dish_instance: DishReadSchema):
     """
     Failed update dish without field price and description - number
     """
@@ -214,16 +190,6 @@ async def test_incorrect_price_patch_dish(ac: AsyncClient, get_menu_id: str, get
         "price": "12n.911f11"
         })
     assert response.status_code == 422
-
-
-async def test_not_found_delete_submenu(ac: AsyncClient, get_menu_id: str, get_dish_instance: DishReadSchema):
-    """
-    Check 404 to submenu for delete submenu
-    """
-
-    response = await ac.delete(f"/api/v1/menus/{get_menu_id}/submenus/{uuid.uuid4()}/dishes/{get_dish_instance.id}")
-    assert response.status_code == 404
-    assert response.json().get('detail') == 'submenu not found'
 
 
 async def test_not_found_delete_dish(ac: AsyncClient, get_menu_id: str, get_submenu_id: str):

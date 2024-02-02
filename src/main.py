@@ -1,6 +1,13 @@
+"""
+main endpoint
+"""
+
 from fastapi import FastAPI
 
-from menu.routers import menu_router, submenu_router, dish_router
+from menu_app.menu import menu_router
+from menu_app.submenu import submenu_router
+from menu_app.dish import dish_router
+
 
 app = FastAPI(
     title="Menu App"
