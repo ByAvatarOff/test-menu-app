@@ -1,106 +1,88 @@
-"""
-Submenu Repository Pattern
-"""
+"""Submenu Repository Pattern"""
+from typing import Sequence
 from uuid import UUID
-from fastapi import Depends, HTTPException, status
-from sqlalchemy import select, insert, update, delete, func
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from fastapi import Depends
+from sqlalchemy import Row, RowMapping, delete, func, insert, select, update
 from sqlalchemy.engine import Result
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
 from db.database import get_async_session
-from menu_app.models import Submenu, Dish
-from menu_app.schemas import SubMenuCreateSchema, \
-    SubMenuWithCounterSchema, SubMenuReadSchema
-from menu_app.utils import model_object_2_dict
 from menu_app.menu.menu_repo import MenuRepository
+from menu_app.models import Dish, Submenu
+from menu_app.schemas import SubMenuCreateSchema, SubMenuReadSchema
+from menu_app.submenu.submenu_exceptions import SubmenuExceptions
 
 
 class SubmenuRepository:
-    """
-    Repository for Submenu queries
-    """
+    """Repository for Submenu queries"""
+
     def __init__(
             self,
             session: AsyncSession = Depends(get_async_session),
-            menu_repo: MenuRepository = Depends()
+            menu_repo: MenuRepository = Depends(),
+            submenu_exceptions: SubmenuExceptions = Depends()
     ) -> None:
         self.session = session
         self.menu_repo = menu_repo
+        self.submenu_exceptions = submenu_exceptions
 
     async def _set_counters_for_submenu(
             self,
             submenu_id: UUID
-    ):
+    ) -> RowMapping:
         """
         Create request for compute dishes count for submenu
         Return updated submenu schema with dishes_count argument
         """
-        submenu = await self.if_submenu_exists(submenu_id)
-
-        stmt = select(
-            Submenu,
-            (func.count(Dish.id)).label('dishes_count')
-        )\
-            .select_from(Submenu)\
-            .join(Dish)\
-            .where(Submenu.id == submenu_id)\
+        stmt = (
+            select(
+                Submenu,
+                (func.count(Dish.id)).label('dishes_count')
+            )
+            .select_from(Submenu)
+            .join(Dish)
+            .where(Submenu.id == submenu_id)
             .group_by(Submenu.id)
-
+        )
         record: Result = await self.session.execute(stmt)
         result = record.mappings().first()
         if not result:
-            return submenu
-        submenu = result.get('Submenu')
-        table_dict = await model_object_2_dict(submenu,
-                                               {'dishes_count': result.get('dishes_count')}
-                                               )
-
-        return SubMenuWithCounterSchema(**table_dict)
+            return await self.if_submenu_exists(submenu_id=submenu_id)
+        return result
 
     async def if_submenu_exists(
             self,
             submenu_id: UUID
-    ):
-        """
-        Check if submenu exists with get submenu_id
-        """
+    ) -> RowMapping:
+        """Check if submenu exists with get submenu_id"""
         record: Result = await self.session.execute(
             select(Submenu).where(Submenu.id == submenu_id)
         )
-        result = record.scalars().first()
+        result = record.mappings().first()
         if not result:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='submenu not found'
-            )
+            await self.submenu_exceptions.submenu_not_found_exception()
         return result
 
     async def check_submenu_unique(
             self,
             title: str
-    ):
-        """
-        Check submenu title unique
-        """
+    ) -> Row:
+        """Check submenu title unique"""
         record: Result = await self.session.execute(
             select(Submenu).where(Submenu.title == title)
         )
         result = record.scalars().first()
         if result:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Submenu with get title exists'
-            )
+            await self.submenu_exceptions.submenu_title_exists_exception()
         return result
 
     async def get_all_submenus(
             self,
             menu_id: UUID
-    ):
-        """
-        List submenu with get menu_id
-        """
+    ) -> Sequence[Row]:
+        """List submenu with get menu_id"""
         await self.menu_repo.if_menu_exists(menu_id=menu_id)
 
         return (
@@ -124,7 +106,7 @@ class SubmenuRepository:
 
         submenu_payload_dict = submenu_payload.model_dump()
         await self.check_submenu_unique(title=submenu_payload_dict.get('title'))
-        submenu_payload_dict.update({"menu_id": menu_id})
+        submenu_payload_dict.update({'menu_id': menu_id})
         result: Result = await self.session.execute(
             insert(Submenu)
             .values(
@@ -138,10 +120,8 @@ class SubmenuRepository:
     async def get_submenu(
             self,
             submenu_id: UUID
-    ) -> SubMenuWithCounterSchema:
-        """
-        Get submenu by id
-        """
+    ) -> RowMapping:
+        """Get submenu by id"""
         return await self._set_counters_for_submenu(submenu_id)
 
     async def update_submenu(
@@ -149,9 +129,7 @@ class SubmenuRepository:
             submenu_id: UUID,
             submenu_payload: SubMenuCreateSchema
     ) -> SubMenuReadSchema:
-        """
-        Update submenu bu id
-        """
+        """Update submenu bu id"""
         await self.if_submenu_exists(submenu_id)
         submenu_payload_dict = submenu_payload.model_dump()
         await self.check_submenu_unique(title=submenu_payload_dict.get('title'))
@@ -170,9 +148,7 @@ class SubmenuRepository:
             self,
             submenu_id: UUID
     ) -> JSONResponse:
-        """
-        Delete submenu by id
-        """
+        """Delete submenu by id"""
         await self.if_submenu_exists(submenu_id)
 
         await self.session.execute(
@@ -182,4 +158,4 @@ class SubmenuRepository:
             )
         )
         await self.session.commit()
-        return JSONResponse(content={'message': 'Success delete'})
+        return JSONResponse(content={'message': 'Success submenu delete'})

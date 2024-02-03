@@ -1,80 +1,83 @@
-"""
-Menu Repository Pattern
-"""
+"""Menu Repository Pattern"""
+from typing import Sequence
 from uuid import UUID
-from fastapi import Depends, HTTPException, status
-from sqlalchemy import select, insert, update, delete, func, Row
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from fastapi import Depends
+from sqlalchemy import Row, RowMapping, delete, func, insert, select, update
 from sqlalchemy.engine import Result
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
 from db.database import get_async_session
-from menu_app.models import Menu, Submenu, Dish
-from menu_app.schemas import MenuCreateSchema, MenuWithCounterSchema, MenuReadSchema
-from menu_app.utils import model_object_2_dict
+from menu_app.menu.menu_exceptions import MenuExceptions
+from menu_app.models import Dish, Menu, Submenu
+from menu_app.schemas import MenuCreateSchema, MenuReadSchema
+from menu_app.utils import ModelToJson
 
 
 class MenuRepository:
-    """
-    Repository for menu queries
-    """
+    """Repository for menu queries"""
 
     def __init__(
             self,
-            session: AsyncSession = Depends(get_async_session)
+            session: AsyncSession = Depends(get_async_session),
+            models_to_json: ModelToJson = Depends(),
+            menu_exceptions: MenuExceptions = Depends(),
+
     ) -> None:
         self.session = session
+        self.models_to_json = models_to_json
+        self.menu_exceptions = menu_exceptions
 
     async def _set_counter_for_menu(
             self,
             menu_id: UUID
-    ):
-        # TODO
+    ) -> RowMapping:
         """
         Create request for compute submenus count and dishes count for menu
         Return updated menu schema with dishes_count and submenus_count argument
         """
-        sub_query = select(Submenu.menu_id, (func.count(Dish.id)).label('dish_count')).select_from(Submenu). \
-            join(Dish).where(Submenu.menu_id == menu_id).group_by(Submenu.menu_id).subquery().alias('submenu_result')
+        sub_query = (
+            select(
+                Submenu.menu_id,
+                (func.count(Dish.id)).label('dish_count')
+            )
+            .select_from(Submenu).join(Dish, Dish.submenu_id == Submenu.id)
+            .where(Submenu.menu_id == menu_id)
+            .group_by(Submenu.menu_id)
+            .subquery().alias('submenu_res'))
 
-        stmt = select(Menu, func.count(Submenu.menu_id).label('submenus_count'),
-                      func.coalesce(func.max(sub_query.c.dish_count), 0).label('dishes_count')).select_from(Menu). \
-            outerjoin(sub_query).where(Menu.id == menu_id).group_by(Menu.id)
+        stmt = (
+            select(
+                Menu,
+                func.count(Submenu.menu_id).label('submenus_count'),
+                func.coalesce(func.max(sub_query.c.dish_count), 0).label('dishes_count')
+            )
+            .select_from(Menu)
+            .outerjoin(sub_query, Menu.id == sub_query.c.menu_id)
+            .where(Menu.id == menu_id)
+            .group_by(Menu.id))
 
         record: Result = await self.session.execute(stmt)
         result = record.mappings().first()
-
         if not result:
             return await self.if_menu_exists(menu_id)
+        return result
 
-        menu = result.get('Menu')
-        table_dict = await model_object_2_dict(menu,
-                                               {'dishes_count': result.get('dishes_count', 0),
-                                                'submenus_count': result.get('submenus_count', 0)}
-                                               )
-
-        return MenuWithCounterSchema(**table_dict)
-
-    async def if_menu_exists(self, menu_id: UUID) -> Row:
-        """
-        Check if menu exists with get menu_id
-        """
+    async def if_menu_exists(self, menu_id: UUID) -> RowMapping:
+        """Check if menu exists with get menu_id"""
         record: Result = await self.session.execute(
             select(Menu).where(Menu.id == menu_id)
         )
-        result = record.scalars().first()
+        result = record.mappings().first()
         if not result:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail='menu not found'
-            )
+            await self.menu_exceptions.menu_not_found_exception()
         return result
 
     async def get_all_menus(
             self
-    ):
-        """
-        List menu
-        """
+    ) -> Sequence[Row]:
+        """List menu"""
         return (
             await self.session.execute(
                 select(Menu).order_by(Menu.id)
@@ -85,9 +88,7 @@ class MenuRepository:
             self,
             menu_payload: MenuCreateSchema
     ) -> MenuReadSchema:
-        """
-        Create new menu
-        """
+        """Create new menu"""
         result: Result = await self.session.execute(
             insert(Menu)
             .values(
@@ -101,10 +102,8 @@ class MenuRepository:
     async def get_menu(
             self,
             menu_id: UUID
-    ) -> MenuWithCounterSchema:
-        """
-        Get menu by id
-        """
+    ) -> RowMapping:
+        """Get menu by id"""
         return await self._set_counter_for_menu(
             menu_id=menu_id
         )
@@ -114,9 +113,7 @@ class MenuRepository:
             menu_id: UUID,
             menu_payload: MenuCreateSchema
     ) -> MenuReadSchema:
-        """
-        Update meny bu id
-        """
+        """Update meny bu id"""
         await self.if_menu_exists(menu_id)
 
         result: Result = await self.session.execute(
@@ -134,9 +131,7 @@ class MenuRepository:
             self,
             menu_id: UUID
     ) -> JSONResponse:
-        """
-        Delete menu by id
-        """
+        """Delete menu by id"""
         await self.if_menu_exists(menu_id)
 
         await self.session.execute(
@@ -147,5 +142,5 @@ class MenuRepository:
         )
         await self.session.commit()
         return JSONResponse(
-            content={'message': 'Success delete'}
+            content={'message': 'Success menu delete'}
         )

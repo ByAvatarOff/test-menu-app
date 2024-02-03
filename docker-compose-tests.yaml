@@ -5,8 +5,10 @@ services:
     container_name: backend_tests
     external_links:
       - db-test-pg:db-test-pg
+      - test_redis_app:test_redis_app
     environment:
       - DB_HOST_TEST=db-test-pg
+      - REDIS_HOST=test_redis_app
     networks:
       - backend_tests_network
     build:
@@ -16,6 +18,8 @@ services:
       - "8000:8000"
     depends_on:
         db_test:
+          condition: service_healthy
+        test_redis:
           condition: service_healthy
 
   db_test:
@@ -36,6 +40,20 @@ services:
       interval: 5s
       timeout: 3s
       retries: 3
+
+  test_redis:
+    image: redis:7.2-alpine
+    container_name: test_redis_app
+    command: --port ${REDIS_PORT}
+    networks:
+      - backend_tests_network
+    expose:
+      - ${REDIS_PORT}
+    healthcheck:
+      test: redis-cli -p ${REDIS_PORT} ping
+      interval: 5s
+      timeout: 3s
+      retries: 2
 
 networks:
   backend_tests_network:

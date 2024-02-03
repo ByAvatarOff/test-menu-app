@@ -13,10 +13,14 @@ services:
     restart: always
     external_links:
       - db-pg:db-pg
+      - redis_app:redis_app
     environment:
       - DB_HOST=db-pg
+      - REDIS_HOST=redis_app
     depends_on:
         db:
+          condition: service_healthy
+        redis:
           condition: service_healthy
 
   db:
@@ -39,6 +43,20 @@ services:
       interval: 5s
       timeout: 3s
       retries: 3
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis_app
+    command: --port ${REDIS_PORT}
+    networks:
+      - backend_network
+    expose:
+      - ${REDIS_PORT}
+    healthcheck:
+      test: redis-cli -p ${REDIS_PORT} ping
+      interval: 5s
+      timeout: 3s
+      retries: 2
 
 networks:
   backend_network:

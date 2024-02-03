@@ -1,19 +1,16 @@
-"""
-Models
-"""
+"""Models"""
 from uuid import UUID, uuid4
+
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship, Mapped, mapped_column
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
 
 
 class Menu(Base):
-    """
-    Model of view table menu
-    """
+    """ Model of view table menu"""
     __tablename__ = 'menu'
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     title: Mapped[str]
@@ -23,9 +20,7 @@ class Menu(Base):
 
 
 class Submenu(Base):
-    """
-    Model of view table submenu
-    """
+    """Model of view table submenu"""
     __tablename__ = 'submenu'
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
@@ -37,9 +32,7 @@ class Submenu(Base):
 
 
 class Dish(Base):
-    """
-    Model of view table dish
-    """
+    """Model of view table dish"""
     __tablename__ = 'dish'
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)

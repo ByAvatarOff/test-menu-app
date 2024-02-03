@@ -1,16 +1,12 @@
-"""
-Schemas for model Menu, Submenu, Dish
-"""
+"""Schemas for model Menu, Submenu, Dish"""
+from decimal import Decimal, InvalidOperation
 from uuid import UUID
-from decimal import InvalidOperation, Decimal
-from pydantic import BaseModel, field_validator, Field, field_serializer
 
+from pydantic import BaseModel, Field, field_serializer, field_validator
 
 
 class MenuReadSchema(BaseModel):
-    """
-    Menu read schema
-    """
+    """Menu read schema"""
     id: UUID
     title: str
     description: str
@@ -30,17 +26,13 @@ class MenuWithCounterSchema(BaseModel):
 
 
 class MenuCreateSchema(BaseModel):
-    """
-    Menu schema for creating menu instance
-    """
+    """Menu schema for creating menu instance"""
     title: str
     description: str
 
 
 class SubMenuReadSchema(BaseModel):
-    """
-    SubMenu read schema
-    """
+    """SubMenu read schema"""
     id: UUID
     title: str
     description: str
@@ -58,43 +50,37 @@ class SubMenuWithCounterSchema(BaseModel):
 
 
 class SubMenuCreateSchema(BaseModel):
-    """
-    SubMenu schema for creating submenu instance
-    """
+    """SubMenu schema for creating submenu instance"""
     title: str
     description: str
 
 
 class DishReadSchema(BaseModel):
-    """
-    Dish read schema
-    """
+    """Dish read schema"""
     id: UUID
     title: str
     description: str
     price: str
 
-    @field_serializer("price")
+    @field_serializer('price')
     def convert_to_2_decimal_places(self, price):
         """
         Serialize price for input
         Only two decimal_places
         """
         try:
-            return f"{Decimal(price):.2f}"
+            return f'{Decimal(price):.2f}'
         except InvalidOperation:
             raise ValueError('Invalid type price')
 
 
 class DishCreateSchema(BaseModel):
-    """
-    Dish schema for creating dish instance
-    """
+    """Dish schema for creating dish instance"""
     title: str
     description: str
     price: str
 
-    @field_validator("price")
+    @field_validator('price')
     @classmethod
     def check_if_decimal_price(cls, value):
         """
