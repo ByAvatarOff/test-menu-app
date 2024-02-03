@@ -48,6 +48,9 @@ DB_PORT_TEST=<POSTGRES_PORT>
 DB_NAME_TEST=<POSTGRES_DB_NAME>
 DB_USER_TEST=<POSTGRES_USER>
 DB_PASS_TEST=<POSTGRES_PASSWORD>
+
+REDIS_HOST=localhost
+REDIS_PORT=<REDIS_PORT>
 ```
 ## Запуск использую docker-compose
 ### Установить docker > `https://docs.docker.com/engine/install/`
