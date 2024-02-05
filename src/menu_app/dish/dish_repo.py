@@ -3,7 +3,7 @@ from typing import Sequence
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy import Row, delete, insert, select, update
+from sqlalchemy import Row, RowMapping, delete, insert, select, update
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
@@ -31,12 +31,12 @@ class DishRepository:
     async def if_dish_exists(
             self,
             dish_id: UUID
-    ) -> Row:
+    ) -> RowMapping:
         """Check if dish exists with get dish_id"""
         record: Result = await self.session.execute(
             select(Dish).where(Dish.id == dish_id)
         )
-        result = record.scalars().first()
+        result = record.mappings().first()
         if not result:
             await self.dish_exceptions.dish_not_found_exception()
         return result
@@ -92,7 +92,7 @@ class DishRepository:
     async def get_dish(
             self,
             dish_id: UUID
-    ) -> Row:
+    ) -> RowMapping:
         """Get dish by id"""
         return await self.if_dish_exists(dish_id)
 

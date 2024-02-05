@@ -5,16 +5,19 @@ from fastapi import APIRouter, Depends
 from starlette import status
 from starlette.responses import JSONResponse
 
+from menu_app.menu.menu_open_api_builder import MenuOpenApiBuilder
 from menu_app.schemas import (
     SubMenuCreateSchema,
     SubMenuReadSchema,
     SubMenuWithCounterSchema,
 )
+from menu_app.submenu.submenu_open_api_builder import SubmenuOpenApiBuilder
 from menu_app.submenu.submenu_service import SubmenuService
+from menu_app.utils import concat_dicts
 
 submenu_router = APIRouter(
     prefix='/api/v1',
-    tags=['submenu_app']
+    tags=['Submenu']
 )
 
 
@@ -22,15 +25,16 @@ submenu_router = APIRouter(
     '/menus/{menu_id}/submenus',
     status_code=status.HTTP_200_OK,
     response_model=list[SubMenuReadSchema],
-    tags=['Submenu'],
-    summary='List Submenus'
+    tags=SubmenuOpenApiBuilder.get_tag(),
+    summary='List Submenus',
+    responses=MenuOpenApiBuilder.get_menu_not_found_404_response()
 )
 async def list_submenus(
         menu_id: UUID,
-        submenu_repo: SubmenuService = Depends()
+        submenu_service: SubmenuService = Depends()
 ) -> list[SubMenuReadSchema]:
     """List submenus"""
-    return await submenu_repo.get_all_submenus(
+    return await submenu_service.get_all_submenus(
         menu_id=menu_id
     )
 
@@ -39,16 +43,20 @@ async def list_submenus(
     '/menus/{menu_id}/submenus',
     status_code=status.HTTP_201_CREATED,
     response_model=SubMenuReadSchema,
-    tags=['Submenu'],
-    summary='Create Submenu'
+    tags=SubmenuOpenApiBuilder.get_tag(),
+    summary='Create Submenu',
+    responses=concat_dicts(
+        MenuOpenApiBuilder.get_menu_not_found_404_response(),
+        SubmenuOpenApiBuilder.get_submenu_unique_title_400_response()
+    )
 )
 async def create_submenu(
         menu_id: UUID,
         payload: SubMenuCreateSchema,
-        submenu_repo: SubmenuService = Depends()
+        submenu_service: SubmenuService = Depends()
 ) -> SubMenuReadSchema:
     """Create submenu"""
-    return await submenu_repo.create_submenu(
+    return await submenu_service.create_submenu(
         submenu_payload=payload,
         menu_id=menu_id
     )
@@ -58,15 +66,16 @@ async def create_submenu(
     '/menus/{menu_id}/submenus/{submenu_id}',
     status_code=status.HTTP_200_OK,
     response_model=SubMenuWithCounterSchema,
-    tags=['Submenu'],
-    summary='Get Submenu'
+    tags=SubmenuOpenApiBuilder.get_tag(),
+    summary='Get Submenu',
+    responses=SubmenuOpenApiBuilder.get_submenu_not_found_404_response()
 )
 async def get_submenu(
         submenu_id: UUID,
-        submenu_repo: SubmenuService = Depends()
+        submenu_service: SubmenuService = Depends()
 ) -> SubMenuWithCounterSchema:
     """Get submenu"""
-    return await submenu_repo.get_submenu(
+    return await submenu_service.get_submenu(
         submenu_id=submenu_id
     )
 
@@ -75,15 +84,20 @@ async def get_submenu(
     '/menus/{menu_id}/submenus/{submenu_id}',
     status_code=status.HTTP_200_OK,
     response_model=SubMenuReadSchema,
-    tags=['Submenu'], summary='Patch Submenu'
+    tags=SubmenuOpenApiBuilder.get_tag(),
+    summary='Patch Submenu',
+    responses=concat_dicts(
+        MenuOpenApiBuilder.get_menu_not_found_404_response(),
+        SubmenuOpenApiBuilder.get_submenu_unique_title_400_response()
+    )
 )
 async def update_submenu(
         submenu_id: UUID,
         payload: SubMenuCreateSchema,
-        submenu_repo: SubmenuService = Depends()
+        submenu_service: SubmenuService = Depends()
 ) -> SubMenuReadSchema:
     """Update submenu"""
-    return await submenu_repo.update_submenu(
+    return await submenu_service.update_submenu(
         submenu_id=submenu_id,
         submenu_payload=payload
     )
@@ -92,14 +106,17 @@ async def update_submenu(
 @submenu_router.delete(
     '/menus/{menu_id}/submenus/{submenu_id}',
     status_code=status.HTTP_200_OK,
-    tags=['Submenu'],
-    summary='Delete Submenu'
+    tags=SubmenuOpenApiBuilder.get_tag(),
+    summary='Delete Submenu',
+    responses=SubmenuOpenApiBuilder.get_submenu_not_found_404_response()
 )
 async def delete_submenu(
+        menu_id: UUID,
         submenu_id: UUID,
-        submenu_repo: SubmenuService = Depends()
+        submenu_service: SubmenuService = Depends()
 ) -> JSONResponse:
     """Delete submenu"""
-    return await submenu_repo.delete_submenu(
-        submenu_id=submenu_id
+    return await submenu_service.delete_submenu(
+        menu_id=menu_id,
+        submenu_id=submenu_id,
     )

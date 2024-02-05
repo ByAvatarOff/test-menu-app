@@ -52,9 +52,18 @@ class MenuService:
             menu_id: UUID
     ) -> MenuWithCounterSchema:
         """Get menu by id"""
+        menu_key = self.menu_app_name_keys.generate_key(
+            self.menu_app_name_keys.get_menu_key,
+            menu_id
+        )
+        cache_menu = await self.menu_cache.get(menu_key)
+        if cache_menu is not None:
+            return await MenuConverter.convert_menu_row_to_schema(cache_menu)
+
         menu = await self.menu_repo.get_menu(
             menu_id=menu_id
         )
+        await self.menu_cache.set(menu_key, menu)
         return await MenuConverter.convert_menu_row_to_schema(menu)
 
     async def update_menu(
@@ -67,7 +76,12 @@ class MenuService:
             menu_id=menu_id,
             menu_payload=menu_payload
         )
+        menu_key = self.menu_app_name_keys.generate_key(
+            self.menu_app_name_keys.get_menu_key,
+            menu_id
+        )
         await self.menu_cache.delete(self.menu_app_name_keys.get_list_menus_key)
+        await self.menu_cache.delete(menu_key)
         return menu
 
     async def delete_menu(
@@ -78,9 +92,14 @@ class MenuService:
         response = await self.menu_repo.delete_menu(
             menu_id=menu_id
         )
+        menu_key = self.menu_app_name_keys.generate_key(
+            self.menu_app_name_keys.get_menu_key,
+            menu_id
+        )
         await self.menu_cache.delete(
             self.menu_app_name_keys.get_list_menus_key,
             self.menu_app_name_keys.get_list_submenus_key,
-            self.menu_app_name_keys.get_list_dishes_key
+            self.menu_app_name_keys.get_list_dishes_key,
+            menu_key,
         )
         return response

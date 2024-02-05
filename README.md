@@ -30,27 +30,10 @@ tests/utils.py
 git clone https://github.com/ByAvatarOff/test-menu-app.git
 cd test-menu-app
 ```
-### Создание переменных окружения
+### Для создания переменных окружения необходимо переимновать файл .env.example > .env
 ```
-echo > .env  # Создание файла в ОС Windows
-touch .env  # Создание файла в ОС Linux
-```
-### Скопировать и подставить значения в .env ->
-```
-DB_HOST=localhost
-DB_PORT=<POSTGRES_PORT>
-DB_NAME=<POSTGRES_DB_NAME>
-DB_USER=<POSTGRES_USER>
-DB_PASS=<POSTGRES_PASSWORD>
-
-DB_HOST_TEST=localhost
-DB_PORT_TEST=<POSTGRES_PORT>
-DB_NAME_TEST=<POSTGRES_DB_NAME>
-DB_USER_TEST=<POSTGRES_USER>
-DB_PASS_TEST=<POSTGRES_PASSWORD>
-
-REDIS_HOST=localhost
-REDIS_PORT=<REDIS_PORT>
+mv .env.example .env  # OS Linux
+ren ".env.example" ".env"  # OS Windows
 ```
 ## Запуск использую docker-compose
 ### Установить docker > `https://docs.docker.com/engine/install/`

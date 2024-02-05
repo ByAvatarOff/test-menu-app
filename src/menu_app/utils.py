@@ -1,4 +1,5 @@
 """Utils"""
+from functools import reduce
 from typing import Sequence
 
 from sqlalchemy import Row, RowMapping
@@ -104,11 +105,17 @@ class DishConverter:
         ]
 
     @staticmethod
-    async def convert_dish_row_to_schema(dish: Row) -> DishReadSchema:
+    async def convert_dish_row_to_schema(dish_row_mapping: RowMapping) -> DishReadSchema:
         """Convert Row to DishReadSchema"""
+        dish = dish_row_mapping.get('Dish')
         return DishReadSchema(
             id=dish.id,
             title=dish.title,
             description=dish.description,
             price=dish.price
         )
+
+
+def concat_dicts(*dicts: dict) -> dict:
+    """Concat getting dict to one dict"""
+    return reduce(lambda dict_1, dict_2: {**dict_1, **dict_2}, dicts)

@@ -1,10 +1,11 @@
 """Cache repository"""
 import pickle
 from typing import Sequence
+from uuid import UUID
 
 from fastapi import Depends
 from redis.asyncio.client import Redis
-from sqlalchemy import Row
+from sqlalchemy import Row, RowMapping
 
 from db.database import get_redis_session
 
@@ -21,7 +22,7 @@ class CacheRepository:
     async def get(
             self,
             key: str
-    ) -> Sequence[Row] | None:
+    ) -> Sequence[Row] | RowMapping | None:
         """Get value from redis"""
         cache_value = await self.redis_session.get(name=key)
         if not cache_value:
@@ -55,17 +56,41 @@ class CacheMenuAppKeys:
         self.__list_submenus_key = 'list_submenus'
         self.__list_dishes_key = 'list_dishes'
 
+        self.__menu_key = 'menu'
+        self.__submenu_key = 'submenu'
+        self.__dish_key = 'dish'
+
     @property
-    def get_list_menus_key(self):
+    def get_list_menus_key(self) -> str:
         """get cache name key for list menus"""
         return self.__list_menus_key
 
     @property
-    def get_list_submenus_key(self):
+    def get_list_submenus_key(self) -> str:
         """get cache name key for list submenus"""
         return self.__list_submenus_key
 
     @property
-    def get_list_dishes_key(self):
+    def get_list_dishes_key(self) -> str:
         """get cache name key for list dishes"""
         return self.__list_dishes_key
+
+    @property
+    def get_menu_key(self) -> str:
+        """get cache name key for list menus"""
+        return self.__menu_key
+
+    @property
+    def get_submenu_key(self) -> str:
+        """get cache name key for list submenus"""
+        return self.__submenu_key
+
+    @property
+    def get_dish_key(self) -> str:
+        """get cache name key for list dishes"""
+        return self.__dish_key
+
+    @staticmethod
+    def generate_key(key: str, identifier: UUID) -> str:
+        """Generate key for redis key cache"""
+        return f'{key}_{identifier}'

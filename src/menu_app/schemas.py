@@ -5,6 +5,10 @@ from uuid import UUID
 from pydantic import BaseModel, Field, field_serializer, field_validator
 
 
+class NotFoundRecord(BaseModel):
+    detail: str
+
+
 class MenuReadSchema(BaseModel):
     """Menu read schema"""
     id: UUID
