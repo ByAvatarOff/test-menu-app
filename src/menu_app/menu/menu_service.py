@@ -1,7 +1,7 @@
 """Menu service layer"""
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import BackgroundTasks, Depends
 from starlette.responses import JSONResponse
 
 from db.cache_repo import CacheMenuAppKeys, CacheRepository
@@ -57,10 +57,8 @@ class MenuService:
         menu = await self.menu_repo.create_menu(
             menu_payload=menu_payload
         )
-        await self.menu_cache.delete(
-            self.menu_app_name_keys.get_list_menus_key,
-            self.menu_app_name_keys.get_list_menus_nested_key
-        )
+        await self.menu_cache.delete_by_pattern(self.menu_app_name_keys.get_list_menus_key)
+        await self.menu_cache.delete([self.menu_app_name_keys.get_list_menus_nested_key])
         return menu
 
     async def get_menu(
@@ -96,16 +94,18 @@ class MenuService:
             self.menu_app_name_keys.get_menu_key,
             menu_id
         )
-        await self.menu_cache.delete(
-            self.menu_app_name_keys.get_list_menus_key,
+        await self.menu_cache.delete_by_pattern(self.menu_app_name_keys.get_list_menus_key)
+        await self.menu_cache.delete([
             self.menu_app_name_keys.get_list_menus_nested_key,
             menu_key
+        ]
         )
         return menu
 
     async def delete_menu(
             self,
-            menu_id: UUID
+            menu_id: UUID,
+            background_tasks: BackgroundTasks
     ) -> JSONResponse:
         """Delete menu by id"""
         response = await self.menu_repo.delete_menu(
@@ -115,11 +115,10 @@ class MenuService:
             self.menu_app_name_keys.get_menu_key,
             menu_id
         )
-        await self.menu_cache.delete(
-            self.menu_app_name_keys.get_list_menus_key,
-            self.menu_app_name_keys.get_list_menus_nested_key,
-            self.menu_app_name_keys.get_list_submenus_key,
-            self.menu_app_name_keys.get_list_dishes_key,
-            menu_key,
+        background_tasks.add_task(
+            self.menu_cache.delete_by_pattern,
+            self.menu_app_name_keys.get_list_common_key
         )
+        background_tasks.add_task(self.menu_cache.delete, [menu_key])
+
         return response

@@ -1,13 +1,17 @@
 """DIsh api routers"""
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from starlette import status
 from starlette.responses import JSONResponse
 
 from menu_app.dish.dish_open_api_builder import DishOpenApiBuilder
 from menu_app.dish.dish_service import DishService
-from menu_app.schemas import DishCreateSchema, DishReadSchema, DishReadWithDiscountSchema
+from menu_app.schemas import (
+    DishCreateSchema,
+    DishReadSchema,
+    DishReadWithDiscountSchema,
+)
 from menu_app.submenu.submenu_open_api_builder import SubmenuOpenApiBuilder
 from menu_app.utils import concat_dicts
 
@@ -118,6 +122,7 @@ async def delete_dish(
         menu_id: UUID,
         submenu_id: UUID,
         dish_id: UUID,
+        background_tasks: BackgroundTasks,
         dish_service: DishService = Depends()
 ) -> JSONResponse:
     """
@@ -127,4 +132,5 @@ async def delete_dish(
         menu_id=menu_id,
         submenu_id=submenu_id,
         dish_id=dish_id,
+        background_tasks=background_tasks,
     )

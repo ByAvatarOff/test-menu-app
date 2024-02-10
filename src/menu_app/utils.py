@@ -1,17 +1,16 @@
 """Utils"""
+from decimal import Decimal
 from functools import reduce
 from typing import Sequence
-from decimal import Decimal
 
 from sqlalchemy import Row, RowMapping
 
 from menu_app.schemas import (
+    DishReadWithDiscountSchema,
     MenuReadSchema,
     MenuWithCounterSchema,
     SubMenuReadSchema,
     SubMenuWithCounterSchema,
-    DishReadWithDiscountSchema,
-    DishReadSchema,
 )
 
 
@@ -96,6 +95,7 @@ class DishConverter:
 
     @staticmethod
     async def return_dish_discount(dish_title: str, dishes_discount: list[dict]) -> Decimal:
+        """Filter list dict of dishes discount by dish title"""
         try:
             dish = list(filter(lambda obj: dish_title in obj.get('title'), dishes_discount))
             if not dish[0].get('discount') or float(dish[0].get('discount')) > 99:
@@ -103,7 +103,6 @@ class DishConverter:
             return Decimal(dish[0].get('discount'))
         except IndexError:
             return Decimal(0)
-
 
     @staticmethod
     async def convert_dish_sequence_to_list_dish(
@@ -122,8 +121,6 @@ class DishConverter:
                 discount=f'{discount}%'
             ))
         return dish_schemas
-
-
 
     @staticmethod
     async def convert_dish_row_to_schema(

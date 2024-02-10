@@ -1,7 +1,7 @@
-
 from sqlalchemy import insert, select, update
-from menu_app.models import Dish, Menu, Submenu
+
 from db.database import get_async_session
+from menu_app.models import Dish, Menu, Submenu
 
 
 class DBCreator:
@@ -69,8 +69,8 @@ class DBUpdater:
     async def check_menu_update(self):
         menus = (await self.session.execute(select(Menu).order_by(Menu.title))).scalars().all()
         for menu, excel_menu in zip(menus, self.excel_menu):
-            if (menu.title != excel_menu.get('title') or
-                    menu.description != excel_menu.get('description')):
+            if (menu.title != excel_menu.get('title')
+                    or menu.description != excel_menu.get('description')):
 
                 await self.session.execute(update(Menu).where(Menu.id == menu.id).values(
                     title=excel_menu.get('title'),

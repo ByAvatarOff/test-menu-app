@@ -1,16 +1,19 @@
 """Parse excel document with menu"""
-import openpyxl
 import pickle
-from openpyxl import Workbook
-from openpyxl.worksheet.worksheet import Worksheet
 from pathlib import Path
 from uuid import uuid4
+
+import openpyxl
+from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
+
 from db.cache_repo import CacheMenuAppKeys
 from db.database import get_redis_session
 
 
 class ExcelParser:
     """Excel menu parser"""
+
     def __init__(self):
         self.wb: Workbook = openpyxl.load_workbook(Path(__file__).parents[2] / 'admin/Menu.xlsx', data_only=True)
         self.sheet: Worksheet = self.wb.active
@@ -32,35 +35,35 @@ class ExcelParser:
                 menu_id = uuid4()
                 menu_list.append(
                     {
-                        "id": str(menu_id),
-                        "title": self.sheet[f'B{rowNumber}'].value,
-                        "description": self.sheet[f'C{rowNumber}'].value,
-                     })
+                        'id': str(menu_id),
+                        'title': self.sheet[f'B{rowNumber}'].value,
+                        'description': self.sheet[f'C{rowNumber}'].value,
+                    })
                 continue
             if isinstance(self.sheet[f'B{rowNumber}'].value, int):
                 submenu_id = uuid4()
                 submenu_list.append(
                     {
-                        "id": str(submenu_id),
-                        "title": self.sheet[f'C{rowNumber}'].value,
-                        "description": self.sheet[f'D{rowNumber}'].value,
-                        "menu_id": str(menu_id),
+                        'id': str(submenu_id),
+                        'title': self.sheet[f'C{rowNumber}'].value,
+                        'description': self.sheet[f'D{rowNumber}'].value,
+                        'menu_id': str(menu_id),
                     })
                 continue
             if isinstance(self.sheet[f'C{rowNumber}'].value, int):
                 dish_id = uuid4()
                 dish_list.append(
                     {
-                        "id": str(dish_id),
-                        "title": self.sheet[f'D{rowNumber}'].value,
-                        "description": self.sheet[f'E{rowNumber}'].value,
-                        "price": str(self.sheet[f'F{rowNumber}'].value).replace(',', '.'),
-                        "submenu_id": str(submenu_id),
+                        'id': str(dish_id),
+                        'title': self.sheet[f'D{rowNumber}'].value,
+                        'description': self.sheet[f'E{rowNumber}'].value,
+                        'price': str(self.sheet[f'F{rowNumber}'].value).replace(',', '.'),
+                        'submenu_id': str(submenu_id),
                     })
                 dish_list_with_discount.append(
                     {
-                        "title": self.sheet[f'D{rowNumber}'].value,
-                        "discount": self.sheet[f'G{rowNumber}'].value,
+                        'title': self.sheet[f'D{rowNumber}'].value,
+                        'discount': self.sheet[f'G{rowNumber}'].value,
                     }
                 )
                 continue

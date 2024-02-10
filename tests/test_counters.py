@@ -5,7 +5,13 @@ from httpx import AsyncClient
 from utils import reverse
 
 from menu_app.dish.dish_router import create_dish
-from menu_app.menu.menu_router import create_menu, delete_menu, get_menu, list_menus
+from menu_app.menu.menu_router import (
+    create_menu,
+    delete_menu,
+    get_menu,
+    list_menus,
+    list_menus_with_nested_obj,
+)
 from menu_app.submenu.submenu_router import (
     create_submenu,
     delete_submenu,
@@ -64,6 +70,28 @@ class TestCreateEntities:
             })
 
 
+class TestNestedMenu:
+    async def test_nested_menu_success(
+            self,
+            ac: AsyncClient
+    ) -> None:
+        """test nested menu success"""
+        response = await ac.get(
+            await reverse(
+                list_menus_with_nested_obj
+            )
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) == 1
+        assert isinstance(data[0].get('submenus'), list)
+        assert len(data[0].get('submenus')) == 1
+        assert isinstance(data[0].get('submenus')[0].get('dish'), list)
+        assert len(data[0].get('submenus')[0].get('dish')) == 2
+
+
 class TestCountersInMenuSubmenu:
 
     async def test_counters_in_menu_success(
@@ -75,7 +103,8 @@ class TestCountersInMenuSubmenu:
         response = await ac.get(
             await reverse(
                 get_menu,
-                menu_id=get_menu_id)
+                menu_id=get_menu_id
+            )
         )
         assert response.status_code == 200
         data = response.json()

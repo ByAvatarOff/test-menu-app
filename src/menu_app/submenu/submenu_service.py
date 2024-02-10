@@ -1,7 +1,7 @@
 """Submenu service layer"""
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import BackgroundTasks, Depends
 from starlette.responses import JSONResponse
 
 from db.cache_repo import CacheMenuAppKeys, CacheRepository
@@ -32,7 +32,11 @@ class SubmenuService:
             menu_id: UUID
     ) -> list[SubMenuReadSchema]:
         """Get list submenu"""
-        cache_list_submenu = await self.submenu_cache.get(self.menu_app_name_keys.get_list_submenus_key)
+        list_submenus_key = self.menu_app_name_keys.generate_key(
+            self.menu_app_name_keys.get_list_submenus_key,
+            menu_id
+        )
+        cache_list_submenu = await self.submenu_cache.get(list_submenus_key)
 
         if cache_list_submenu is not None:
             return await SubmenuConverter.convert_submenus_sequence_to_list_submenus(cache_list_submenu)
@@ -40,7 +44,7 @@ class SubmenuService:
         list_submenus = await self.submenu_repo.get_all_submenus(
             menu_id=menu_id
         )
-        await self.submenu_cache.set(self.menu_app_name_keys.get_list_submenus_key, list_submenus)
+        await self.submenu_cache.set(list_submenus_key, list_submenus)
         return await SubmenuConverter.convert_submenus_sequence_to_list_submenus(list_submenus)
 
     async def create_submenu(
@@ -53,9 +57,9 @@ class SubmenuService:
             submenu_payload=submenu_payload,
             menu_id=menu_id
         )
+        await self.submenu_cache.delete_by_pattern(self.menu_app_name_keys.get_list_submenus_key)
         await self.submenu_cache.delete(
-            self.menu_app_name_keys.get_list_submenus_key,
-            self.menu_app_name_keys.get_list_menus_nested_key
+            [self.menu_app_name_keys.get_list_menus_nested_key]
         )
         return submenu
 
@@ -92,17 +96,18 @@ class SubmenuService:
             self.menu_app_name_keys.get_submenu_key,
             submenu_id
         )
-        await self.submenu_cache.delete(
-            self.menu_app_name_keys.get_list_submenus_key,
+        await self.submenu_cache.delete_by_pattern(self.menu_app_name_keys.get_list_submenus_key)
+        await self.submenu_cache.delete([
             self.menu_app_name_keys.get_list_menus_nested_key,
-            submenu_key
-        )
+            submenu_key,
+        ])
         return submenu
 
     async def delete_submenu(
             self,
             submenu_id: UUID,
-            menu_id: UUID
+            menu_id: UUID,
+            background_tasks: BackgroundTasks
     ) -> JSONResponse:
         """Delete submenu by id"""
         response = await self.submenu_repo.delete_submenu(
@@ -116,11 +121,17 @@ class SubmenuService:
             self.menu_app_name_keys.get_menu_key,
             menu_id
         )
-        await self.submenu_cache.delete(
-            self.menu_app_name_keys.get_list_submenus_key,
-            self.menu_app_name_keys.get_list_dishes_key,
+        background_tasks.add_task(
+            self.submenu_cache.delete_by_pattern,
+            self.menu_app_name_keys.get_list_dishes_key
+        )
+        background_tasks.add_task(
+            self.submenu_cache.delete_by_pattern,
+            self.menu_app_name_keys.get_list_submenus_key
+        )
+        background_tasks.add_task(self.submenu_cache.delete, [
             self.menu_app_name_keys.get_list_menus_nested_key,
             menu_key,
-            submenu_key,
-        )
+            submenu_key
+        ])
         return response

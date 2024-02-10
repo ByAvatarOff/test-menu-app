@@ -1,14 +1,14 @@
 """Config for launch celery"""
-from celery import Celery
-from celery_app.update_db import run_update_base
-from celery_app.parser import ExcelParser
 import asyncio
 
+from celery import Celery
+
+from celery_app.parser import ExcelParser
+from celery_app.update_db import run_update_base
 
 celery_instance = Celery(
     'periodic_task',
-    broker=(f'amqp://guest:guest@'
-            f'localhost:5672')
+    broker='amqp://guest:guest@localhost:5672'
 )
 
 

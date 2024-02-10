@@ -1,12 +1,16 @@
 """DIsh service layer"""
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import BackgroundTasks, Depends
 from starlette.responses import JSONResponse
 
 from db.cache_repo import CacheMenuAppKeys, CacheRepository
 from menu_app.dish.dish_repo import DishRepository
-from menu_app.schemas import DishCreateSchema, DishReadSchema, DishReadWithDiscountSchema
+from menu_app.schemas import (
+    DishCreateSchema,
+    DishReadSchema,
+    DishReadWithDiscountSchema,
+)
 from menu_app.utils import DishConverter
 
 
@@ -28,7 +32,11 @@ class DishService:
             submenu_id: UUID
     ) -> list[DishReadWithDiscountSchema]:
         """Get list dishes"""
-        cache_list_dishes = await self.dish_cache.get(self.menu_app_name_keys.get_list_dishes_key)
+        list_dishes_key = self.menu_app_name_keys.generate_key(
+            self.menu_app_name_keys.get_list_dishes_key,
+            submenu_id
+        )
+        cache_list_dishes = await self.dish_cache.get(list_dishes_key)
         dishes_discount = await self.dish_cache.get(self.menu_app_name_keys.get_dish_discount_key)
         if cache_list_dishes is not None:
             return await DishConverter.convert_dish_sequence_to_list_dish(
@@ -38,7 +46,7 @@ class DishService:
         list_dishes = await self.dish_repo.get_all_dishes(
             submenu_id=submenu_id
         )
-        await self.dish_cache.set(self.menu_app_name_keys.get_list_dishes_key, list_dishes)
+        await self.dish_cache.set(list_dishes_key, list_dishes)
         return await DishConverter.convert_dish_sequence_to_list_dish(
             list_dishes, dishes_discount
         )
@@ -53,9 +61,9 @@ class DishService:
             dish_payload=dish_payload,
             submenu_id=submenu_id
         )
+        await self.dish_cache.delete_by_pattern(self.menu_app_name_keys.get_list_dishes_key)
         await self.dish_cache.delete(
-            self.menu_app_name_keys.get_list_dishes_key,
-            self.menu_app_name_keys.get_list_menus_nested_key,
+            [self.menu_app_name_keys.get_list_menus_nested_key],
         )
         return dish
 
@@ -93,18 +101,19 @@ class DishService:
             self.menu_app_name_keys.get_dish_key,
             dish_id
         )
-        await self.dish_cache.delete(
-            self.menu_app_name_keys.get_list_dishes_key,
+        await self.dish_cache.delete_by_pattern(self.menu_app_name_keys.get_list_dishes_key)
+        await self.dish_cache.delete([
             self.menu_app_name_keys.get_list_menus_nested_key,
             dish_key
-        )
+        ])
         return dish
 
     async def delete_dish(
             self,
             menu_id: UUID,
             submenu_id: UUID,
-            dish_id: UUID
+            dish_id: UUID,
+            background_tasks: BackgroundTasks
     ) -> JSONResponse:
         """Delete dish by id"""
         response = await self.dish_repo.delete_dish(
@@ -122,11 +131,15 @@ class DishService:
             self.menu_app_name_keys.get_dish_key,
             dish_id
         )
-        await self.dish_cache.delete(
-            self.menu_app_name_keys.get_list_dishes_key,
+
+        background_tasks.add_task(
+            self.dish_cache.delete_by_pattern,
+            self.menu_app_name_keys.get_list_dishes_key
+        )
+        background_tasks.add_task(self.dish_cache.delete, [
             self.menu_app_name_keys.get_list_menus_nested_key,
             menu_key,
             submenu_key,
             dish_key,
-        )
+        ])
         return response

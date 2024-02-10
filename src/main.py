@@ -6,7 +6,6 @@ from menu_app.dish import dish_router
 from menu_app.menu import menu_router
 from menu_app.submenu import submenu_router
 
-
 app = FastAPI(
     title='Menu App',
     description='Menu App for CRUD operations',

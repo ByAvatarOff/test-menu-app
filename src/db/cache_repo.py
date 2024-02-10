@@ -3,7 +3,7 @@ import pickle
 from typing import Sequence
 from uuid import UUID
 
-from fastapi import BackgroundTasks, Depends
+from fastapi import Depends
 from redis.asyncio.client import Redis
 from sqlalchemy import Row, RowMapping
 
@@ -18,7 +18,6 @@ class CacheRepository:
             redis_session: Redis = Depends(get_redis_session),
     ) -> None:
         self.redis_session = redis_session
-        self.bg_task = BackgroundTasks()
 
     async def get(
             self,
@@ -38,21 +37,28 @@ class CacheRepository:
     ) -> None:
         """Set value to redis use fast api bg task"""
         await self.redis_session.set(name=key, value=pickle.dumps(value))
-        self.bg_task.add_task(self.redis_session.set, name=key, value=pickle.dumps(value), **kwargs)
 
     async def delete(
             self,
-            *key: str
+            keys: list[str],
     ) -> None:
         """Delete value from redis use fast api bg task"""
-        await self.redis_session.delete(*key)
-        self.bg_task.add_task(self.redis_session.delete, *key)
+        await self.redis_session.delete(*keys)
+
+    async def delete_by_pattern(
+            self,
+            key: str
+    ) -> None:
+        """Delete value from redis by pattern"""
+        for key in await self.redis_session.keys(f'{key}*'):
+            await self.redis_session.delete(key)
 
 
 class CacheMenuAppKeys:
     """Class for cache named keys for menu app"""
 
     def __init__(self):
+        self.__list_common_key = 'list'
         self.__list_menus_key = 'list_menus'
         self.__list_submenus_key = 'list_submenus'
         self.__list_dishes_key = 'list_dishes'
@@ -63,6 +69,11 @@ class CacheMenuAppKeys:
         self.__dish_key = 'dish'
 
         self.__dish_discount_key = 'dish_discount_key'
+
+    @property
+    def get_list_common_key(self) -> str:
+        """get cache name key for list menus"""
+        return self.__list_common_key
 
     @property
     def get_list_menus_key(self) -> str:

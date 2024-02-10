@@ -1,7 +1,7 @@
 """Submenu api routers"""
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from starlette import status
 from starlette.responses import JSONResponse
 
@@ -113,10 +113,12 @@ async def update_submenu(
 async def delete_submenu(
         menu_id: UUID,
         submenu_id: UUID,
+        background_tasks: BackgroundTasks,
         submenu_service: SubmenuService = Depends()
 ) -> JSONResponse:
     """Delete submenu"""
     return await submenu_service.delete_submenu(
         menu_id=menu_id,
         submenu_id=submenu_id,
+        background_tasks=background_tasks,
     )

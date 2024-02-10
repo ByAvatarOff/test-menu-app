@@ -4,3 +4,6 @@ venv/
 __pycache__/
 .pytest_cache/
 .mypy_cache/
+src/celerybeat-schedule.bak
+src/celerybeat-schedule.dat
+src/celerybeat-schedule.dir
