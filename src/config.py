@@ -17,5 +17,10 @@ DB_NAME_TEST = os.environ.get('DB_NAME_TEST')
 DB_USER_TEST = os.environ.get('DB_USER_TEST')
 DB_PASS_TEST = os.environ.get('DB_PASS_TEST')
 
+RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST')
+RABBITMQ_USER = os.environ.get('RABBITMQ_USER')
+RABBITMQ_PORT = os.environ.get('RABBITMQ_PORT')
+RABBITMQ_PASS = os.environ.get('RABBITMQ_PASS')
+
 REDIS_HOST = os.environ.get('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')

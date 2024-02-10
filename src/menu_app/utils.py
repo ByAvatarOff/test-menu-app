@@ -1,15 +1,17 @@
 """Utils"""
 from functools import reduce
 from typing import Sequence
+from decimal import Decimal
 
 from sqlalchemy import Row, RowMapping
 
 from menu_app.schemas import (
-    DishReadSchema,
     MenuReadSchema,
     MenuWithCounterSchema,
     SubMenuReadSchema,
     SubMenuWithCounterSchema,
+    DishReadWithDiscountSchema,
+    DishReadSchema,
 )
 
 
@@ -91,28 +93,52 @@ class SubmenuConverter:
 
 class DishConverter:
     """Class for convert Dish model"""
+
     @staticmethod
-    async def convert_dish_sequence_to_list_dish(dishes: Sequence[Row]) -> list[DishReadSchema]:
+    async def return_dish_discount(dish_title: str, dishes_discount: list[dict]) -> Decimal:
+        try:
+            dish = list(filter(lambda obj: dish_title in obj.get('title'), dishes_discount))
+            if not dish[0].get('discount') or float(dish[0].get('discount')) > 99:
+                return Decimal(0)
+            return Decimal(dish[0].get('discount'))
+        except IndexError:
+            return Decimal(0)
+
+
+    @staticmethod
+    async def convert_dish_sequence_to_list_dish(
+            dishes: Sequence[Row],
+            dishes_discount: list[dict]
+    ) -> list[DishReadWithDiscountSchema]:
         """Convert Sequence[Row] to list[DishReadSchema]"""
-        return [
-            DishReadSchema(
+        dish_schemas = []
+        for dish in dishes:
+            discount = await DishConverter.return_dish_discount(dish.title, dishes_discount)
+            dish_schemas.append(DishReadWithDiscountSchema(
                 id=dish.id,
                 title=dish.title,
                 description=dish.description,
-                price=dish.price
-            )
-            for dish in dishes
-        ]
+                price=f'{Decimal(dish.price) * (1 - (discount / 100)):.2f}',
+                discount=f'{discount}%'
+            ))
+        return dish_schemas
+
+
 
     @staticmethod
-    async def convert_dish_row_to_schema(dish_row_mapping: RowMapping) -> DishReadSchema:
+    async def convert_dish_row_to_schema(
+            dish_row_mapping: RowMapping,
+            dishes_discount: list[dict]
+    ) -> DishReadWithDiscountSchema:
         """Convert Row to DishReadSchema"""
         dish = dish_row_mapping.get('Dish')
-        return DishReadSchema(
+        discount = await DishConverter.return_dish_discount(dish.title, dishes_discount)
+        return DishReadWithDiscountSchema(
             id=dish.id,
             title=dish.title,
             description=dish.description,
-            price=dish.price
+            price=f'{Decimal(dish.price) * (1 - (discount / 100)):.2f}',
+            discount=f'{discount}%'
         )
 
 

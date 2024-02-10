@@ -7,7 +7,12 @@ from starlette.responses import JSONResponse
 
 from menu_app.menu.menu_open_api_builder import MenuOpenApiBuilder
 from menu_app.menu.menu_service import MenuService
-from menu_app.schemas import MenuCreateSchema, MenuReadSchema, MenuWithCounterSchema
+from menu_app.schemas import (
+    MenuCreateSchema,
+    MenuReadNested,
+    MenuReadSchema,
+    MenuWithCounterSchema,
+)
 
 menu_router = APIRouter(
     prefix='/api/v1',
@@ -27,6 +32,20 @@ async def list_menus(
 ) -> list[MenuReadSchema]:
     """List menus"""
     return await menu_service.get_all_menus()
+
+
+@menu_router.get(
+    '/nested_menus',
+    status_code=status.HTTP_200_OK,
+    response_model=list[MenuReadNested],
+    tags=MenuOpenApiBuilder.get_tag(),
+    summary='list menu with nested objects'
+)
+async def list_menus_with_nested_obj(
+        menu_service: MenuService = Depends()
+) -> list[MenuReadNested]:
+    """List menus"""
+    return await menu_service.list_menus_with_nested_obj()
 
 
 @menu_router.post(

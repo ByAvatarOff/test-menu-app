@@ -16,7 +16,7 @@ class Menu(Base):
     title: Mapped[str]
     description: Mapped[str]
 
-    submenus: Mapped['Submenu'] = relationship(cascade='all, delete-orphan')
+    submenus: Mapped[list['Submenu']] = relationship(cascade='all, delete-orphan')
 
 
 class Submenu(Base):
@@ -28,7 +28,7 @@ class Submenu(Base):
     description: Mapped[str]
 
     menu_id: Mapped[UUID] = mapped_column(ForeignKey('menu.id', ondelete='CASCADE'))
-    dish: Mapped['Dish'] = relationship(cascade='all, delete-orphan')
+    dish: Mapped[list['Dish']] = relationship(cascade='all, delete-orphan')
 
 
 class Dish(Base):

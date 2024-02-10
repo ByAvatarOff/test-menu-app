@@ -36,6 +36,19 @@ class MenuService:
         await self.menu_cache.set(self.menu_app_name_keys.get_list_menus_key, list_menus)
         return await MenuConverter.convert_menus_sequence_to_list_menus(list_menus)
 
+    async def list_menus_with_nested_obj(
+            self
+    ):
+        """list menus with nested obj"""
+        cache_list_menu = await self.menu_cache.get(self.menu_app_name_keys.get_list_menus_nested_key)
+
+        if cache_list_menu is not None:
+            return cache_list_menu
+
+        list_menus_nested = await self.menu_repo.get_all_menus_with_nested_obj()
+        await self.menu_cache.set(self.menu_app_name_keys.get_list_menus_nested_key, list_menus_nested)
+        return list_menus_nested
+
     async def create_menu(
             self,
             menu_payload: MenuCreateSchema
@@ -44,7 +57,10 @@ class MenuService:
         menu = await self.menu_repo.create_menu(
             menu_payload=menu_payload
         )
-        await self.menu_cache.delete(self.menu_app_name_keys.get_list_menus_key)
+        await self.menu_cache.delete(
+            self.menu_app_name_keys.get_list_menus_key,
+            self.menu_app_name_keys.get_list_menus_nested_key
+        )
         return menu
 
     async def get_menu(
@@ -80,8 +96,11 @@ class MenuService:
             self.menu_app_name_keys.get_menu_key,
             menu_id
         )
-        await self.menu_cache.delete(self.menu_app_name_keys.get_list_menus_key)
-        await self.menu_cache.delete(menu_key)
+        await self.menu_cache.delete(
+            self.menu_app_name_keys.get_list_menus_key,
+            self.menu_app_name_keys.get_list_menus_nested_key,
+            menu_key
+        )
         return menu
 
     async def delete_menu(
@@ -98,6 +117,7 @@ class MenuService:
         )
         await self.menu_cache.delete(
             self.menu_app_name_keys.get_list_menus_key,
+            self.menu_app_name_keys.get_list_menus_nested_key,
             self.menu_app_name_keys.get_list_submenus_key,
             self.menu_app_name_keys.get_list_dishes_key,
             menu_key,

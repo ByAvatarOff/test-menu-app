@@ -6,6 +6,7 @@ from fastapi import Depends
 from sqlalchemy import Row, RowMapping, delete, func, insert, select, update
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from starlette.responses import JSONResponse
 
 from db.database import get_async_session
@@ -81,6 +82,18 @@ class MenuRepository:
         return (
             await self.session.execute(
                 select(Menu).order_by(Menu.id)
+            )
+        ).scalars().all()
+
+    async def get_all_menus_with_nested_obj(
+            self
+    ) -> Sequence[Row]:
+        """List nested objects with menu"""
+        return (
+            await self.session.execute(
+                select(Menu)
+                .options(selectinload(Menu.submenus)
+                         .selectinload(Submenu.dish))
             )
         ).scalars().all()
 

@@ -7,7 +7,7 @@ from starlette.responses import JSONResponse
 
 from menu_app.dish.dish_open_api_builder import DishOpenApiBuilder
 from menu_app.dish.dish_service import DishService
-from menu_app.schemas import DishCreateSchema, DishReadSchema
+from menu_app.schemas import DishCreateSchema, DishReadSchema, DishReadWithDiscountSchema
 from menu_app.submenu.submenu_open_api_builder import SubmenuOpenApiBuilder
 from menu_app.utils import concat_dicts
 
@@ -20,7 +20,7 @@ dish_router = APIRouter(
 @dish_router.get(
     '/menus/{menu_id}/submenus/{submenu_id}/dishes',
     status_code=status.HTTP_200_OK,
-    response_model=list[DishReadSchema],
+    response_model=list[DishReadWithDiscountSchema],
     tags=DishOpenApiBuilder.get_tag(),
     summary='List Dishes',
     responses=SubmenuOpenApiBuilder.get_submenu_not_found_404_response()
@@ -28,7 +28,7 @@ dish_router = APIRouter(
 async def list_dishes(
         submenu_id: UUID,
         dish_service: DishService = Depends()
-) -> list[DishReadSchema]:
+) -> list[DishReadWithDiscountSchema]:
     """
     List dishes
     """
@@ -56,7 +56,7 @@ async def create_dish(
     """
     Create dish
     """
-    return await dish_service.create_submenu(
+    return await dish_service.create_dish(
         dish_payload=payload,
         submenu_id=submenu_id
     )
@@ -65,7 +65,7 @@ async def create_dish(
 @dish_router.get(
     '/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}',
     status_code=status.HTTP_200_OK,
-    response_model=DishReadSchema,
+    response_model=DishReadWithDiscountSchema,
     tags=DishOpenApiBuilder.get_tag(),
     summary='Get Dish',
     responses=DishOpenApiBuilder.get_dish_not_found_404_response()
@@ -73,7 +73,7 @@ async def create_dish(
 async def get_dish(
         dish_id: UUID,
         dish_service: DishService = Depends()
-) -> DishReadSchema:
+) -> DishReadWithDiscountSchema:
     """
     Get dish
     """

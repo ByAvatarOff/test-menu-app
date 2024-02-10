@@ -78,6 +78,26 @@ class DishReadSchema(BaseModel):
             raise ValueError('Invalid type price')
 
 
+class DishReadWithDiscountSchema(BaseModel):
+    """Dish read with discount schema"""
+    id: UUID
+    title: str
+    description: str
+    price: str
+    discount: str
+
+    @field_serializer('price')
+    def convert_to_2_decimal_places(self, price):
+        """
+        Serialize price for input
+        Only two decimal_places
+        """
+        try:
+            return f'{Decimal(price):.2f}'
+        except InvalidOperation:
+            raise ValueError('Invalid type price')
+
+
 class DishCreateSchema(BaseModel):
     """Dish schema for creating dish instance"""
     title: str
@@ -96,3 +116,13 @@ class DishCreateSchema(BaseModel):
             return value
         except InvalidOperation:
             raise ValueError('You must get float price')
+
+
+class SubmenuReadNested(SubMenuReadSchema):
+    """Schema for view all nester obj on dish table"""
+    dish: list[DishReadSchema]
+
+
+class MenuReadNested(MenuReadSchema):
+    """Schema for view all nester obj on submenu table"""
+    submenus: list[SubmenuReadNested]

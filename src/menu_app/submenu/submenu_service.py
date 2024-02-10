@@ -53,7 +53,10 @@ class SubmenuService:
             submenu_payload=submenu_payload,
             menu_id=menu_id
         )
-        await self.submenu_cache.delete(self.menu_app_name_keys.get_list_submenus_key)
+        await self.submenu_cache.delete(
+            self.menu_app_name_keys.get_list_submenus_key,
+            self.menu_app_name_keys.get_list_menus_nested_key
+        )
         return submenu
 
     async def get_submenu(
@@ -89,8 +92,11 @@ class SubmenuService:
             self.menu_app_name_keys.get_submenu_key,
             submenu_id
         )
-        await self.submenu_cache.delete(self.menu_app_name_keys.get_list_submenus_key)
-        await self.submenu_cache.delete(submenu_key)
+        await self.submenu_cache.delete(
+            self.menu_app_name_keys.get_list_submenus_key,
+            self.menu_app_name_keys.get_list_menus_nested_key,
+            submenu_key
+        )
         return submenu
 
     async def delete_submenu(
@@ -113,6 +119,7 @@ class SubmenuService:
         await self.submenu_cache.delete(
             self.menu_app_name_keys.get_list_submenus_key,
             self.menu_app_name_keys.get_list_dishes_key,
+            self.menu_app_name_keys.get_list_menus_nested_key,
             menu_key,
             submenu_key,
         )
