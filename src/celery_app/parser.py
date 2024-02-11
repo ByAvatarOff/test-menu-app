@@ -20,10 +20,6 @@ class ExcelParser:
         self.redis_session = get_redis_session()
         self.menu_app_keys = CacheMenuAppKeys()
 
-    async def sorted_menu(self, menu_obj):
-        """sorted menu_obj by id"""
-        return sorted(menu_obj, key=lambda obj: obj.get('id'))
-
     async def build_menu(self):
         """Read excel document and build 3 list of dict: menu. submenu, dish """
         menu_list = []
@@ -73,7 +69,7 @@ class ExcelParser:
         session = await self.redis_session.__anext__()
         await session.set(dish_discount_key, pickle.dumps(dish_list_with_discount))
         return (
-            await self.sorted_menu(menu_list),
-            await self.sorted_menu(submenu_list),
-            await self.sorted_menu(dish_list),
+            menu_list,
+            submenu_list,
+            dish_list,
         )

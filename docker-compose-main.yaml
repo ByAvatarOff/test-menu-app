@@ -7,7 +7,7 @@ services:
       - backend_network
     build:
       context: .
-      dockerfile: Dockerfile_main
+      dockerfile: dockerfiles/Dockerfile_main
     ports:
       - "8000:8000"
     restart: always
@@ -61,28 +61,43 @@ services:
       retries: 2
 
   rabbitmq:
-    image: rabbitmq:3.12.12-alpine
+    image: rabbitmq:3.13-rc-alpine
     container_name: rabbitmq_app
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_USER}
-      RABBITMQ_DEFAULT_PORT: ${RABBITMQ_PORT}
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_HOST}
     ports:
       - ${RABBITMQ_PORT}:${RABBITMQ_PORT}
     networks:
       - backend_network
     healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 5s
-      timeout: 3s
+      test: rabbitmq-diagnostics -p ${RABBITMQ_PORT} -q ping
+      interval: 25s
+      timeout: 10s
       retries: 2
+      start_period: 20s
 
   celery:
     container_name: celery_app
     build:
       context: .
-      dockerfile: Dockerfile_main_celery
+      dockerfile: dockerfiles/Dockerfile_main_celery
+    external_links:
+      - rabbitmq_app:rabbitmq_app
+      - redis_app:redis_app
+      - db-pg:db-pg
+    environment:
+      - RABBITMQ_HOST=rabbitmq_app
+      - REDIS_HOST=redis_app
+      - DB_HOST=db-pg
+    networks:
+      - backend_network
+    depends_on:
+        rabbitmq:
+          condition: service_healthy
+
+  celery-beat:
+    container_name: celery_beat_app
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile_main_celery_beat
     external_links:
       - rabbitmq_app:rabbitmq_app
     environment:
@@ -90,8 +105,7 @@ services:
     networks:
       - backend_network
     depends_on:
-      - backend
-      - rabbitmq
+      - celery
 
 networks:
   backend_network:

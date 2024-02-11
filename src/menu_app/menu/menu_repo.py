@@ -3,7 +3,7 @@ from typing import Sequence
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy import Row, RowMapping, delete, func, insert, select, update
+from sqlalchemy import Row, RowMapping, delete, distinct, func, insert, select, update
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -38,24 +38,14 @@ class MenuRepository:
         Create request for compute submenus count and dishes count for menu
         Return updated menu schema with dishes_count and submenus_count argument
         """
-        sub_query = (
-            select(
-                Submenu.menu_id,
-                (func.count(Dish.id)).label('dish_count')
-            )
-            .select_from(Submenu).join(Dish, Dish.submenu_id == Submenu.id)
-            .where(Submenu.menu_id == menu_id)
-            .group_by(Submenu.menu_id)
-            .subquery().alias('submenu_res'))
-
         stmt = (
             select(
                 Menu,
-                func.count(Submenu.menu_id).label('submenus_count'),
-                func.coalesce(func.max(sub_query.c.dish_count), 0).label('dishes_count')
+                func.count(distinct(Submenu.id)).label('submenus_count'),
+                func.count(distinct(Dish.id)).label('dishes_count')
             )
-            .select_from(Menu)
-            .outerjoin(sub_query, Menu.id == sub_query.c.menu_id)
+            .join(Submenu, Menu.id == Submenu.menu_id)
+            .join(Dish, Submenu.id == Dish.submenu_id)
             .where(Menu.id == menu_id)
             .group_by(Menu.id))
 

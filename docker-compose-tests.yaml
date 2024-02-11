@@ -13,7 +13,7 @@ services:
       - backend_tests_network
     build:
       context: .
-      dockerfile: Dockerfile_tests
+      dockerfile: dockerfiles/Dockerfile_tests
     ports:
       - "8000:8000"
     depends_on:
