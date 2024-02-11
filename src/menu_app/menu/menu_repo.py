@@ -30,7 +30,7 @@ class MenuRepository:
         self.models_to_json = models_to_json
         self.menu_exceptions = menu_exceptions
 
-    async def _set_counter_for_menu(
+    async def _set_counters_for_menu(
             self,
             menu_id: UUID
     ) -> RowMapping:
@@ -117,7 +117,7 @@ class MenuRepository:
             menu_id: UUID
     ) -> RowMapping:
         """Get menu by id"""
-        return await self._set_counter_for_menu(
+        return await self._set_counters_for_menu(
             menu_id=menu_id
         )
 

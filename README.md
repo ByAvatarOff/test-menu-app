@@ -22,8 +22,36 @@
 
 ## Задания с *
 
-+ ### tests/utils.py # аналог Django reverse()
-+
+1) ### Реализовать вывод количества подменю и блюд для Меню через один (сложный) ORM запрос.
+   ```
+   src/menu_app/menu/menu_repo/_set_counters_for_menu
+   src/menu_app/menu/submenu_repo/_set_counters_for_submenu
+   ```
+2) ### Реализовать тестовый сценарий «Проверка кол-ва блюд и подменю в меню» из Postman с помощью pytest
+   ```
+   tests/test_counters
+   ```
+3) ### Описать ручки API в соответствий c OpenAPI
+   ```
+   src/menu_app/menu/menu_routers
+   src/menu_app/submenu/submenu_routers
+   src/menu_app/dish/dish_routers
+   ```
+4) ### аналог Django reverse()
+   ```
+   tests/utils.py
+   ```
+5) ### Обновление меню из google sheets раз в 15 сек.
+   ```
+   src/celery_app/parser
+   src/celery_app/update_db
+   ```
+6) ### Блюда по акции. Размер скидки (%) указывается в столбце G файла Menu.xlsx
+   ```
+   src/menu_app/dish/dish_service/get_dish, get_all_dishes
+   src/menu_app/utils/DishConverter
+   ```
+
 
 ## Алгоритм запуска
 

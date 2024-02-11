@@ -14,16 +14,18 @@ from db.database import get_redis_session
 class ExcelParser:
     """Excel menu parser"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.wb: Workbook = openpyxl.load_workbook(Path(__file__).parents[2] / 'admin/Menu.xlsx', data_only=True)
         self.sheet: Worksheet = self.wb.active
         self.redis_session = get_redis_session()
         self.menu_app_keys = CacheMenuAppKeys()
 
     async def sorted_menu(self, menu_obj):
-        return sorted(menu_obj, key=lambda obj: obj.get('title'))
+        """sorted menu_obj by id"""
+        return sorted(menu_obj, key=lambda obj: obj.get('id'))
 
     async def build_menu(self):
+        """Read excel document and build 3 list of dict: menu. submenu, dish """
         menu_list = []
         submenu_list = []
         dish_list = []

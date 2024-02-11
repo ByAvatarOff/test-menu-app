@@ -22,6 +22,8 @@ services:
           condition: service_healthy
         redis:
           condition: service_healthy
+        rabbitmq:
+          condition: service_healthy
 
   db:
     image: postgres:15.1-alpine
@@ -57,6 +59,39 @@ services:
       interval: 5s
       timeout: 3s
       retries: 2
+
+  rabbitmq:
+    image: rabbitmq:3.12.12-alpine
+    container_name: rabbitmq_app
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_HOST}
+    ports:
+      - ${RABBITMQ_PORT}:${RABBITMQ_PORT}
+    networks:
+      - backend_network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 5s
+      timeout: 3s
+      retries: 2
+
+  celery:
+    container_name: celery_app
+    build:
+      context: .
+      dockerfile: Dockerfile_main_celery
+    external_links:
+      - rabbitmq_app:rabbitmq_app
+    environment:
+      - RABBITMQ_HOST=rabbitmq_app
+    networks:
+      - backend_network
+    depends_on:
+      - backend
+      - rabbitmq
 
 networks:
   backend_network:

@@ -14,4 +14,3 @@ types-redis==4.6.0.20240106
 uvicorn==0.26.0
 celery==5.3.6
 openpyxl==3.1.2
-asgiref==3.7.2

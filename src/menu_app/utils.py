@@ -94,9 +94,14 @@ class DishConverter:
     """Class for convert Dish model"""
 
     @staticmethod
-    async def return_dish_discount(dish_title: str, dishes_discount: list[dict]) -> Decimal:
+    async def return_dish_discount(
+            dish_title: str,
+            dishes_discount: Sequence[Row] | RowMapping | list[dict] | None
+    ) -> Decimal:
         """Filter list dict of dishes discount by dish title"""
         try:
+            if not dishes_discount:
+                return Decimal(0)
             dish = list(filter(lambda obj: dish_title in obj.get('title'), dishes_discount))
             if not dish[0].get('discount') or float(dish[0].get('discount')) > 99:
                 return Decimal(0)
@@ -107,7 +112,7 @@ class DishConverter:
     @staticmethod
     async def convert_dish_sequence_to_list_dish(
             dishes: Sequence[Row],
-            dishes_discount: list[dict]
+            dishes_discount: Sequence[Row] | list[dict] | None
     ) -> list[DishReadWithDiscountSchema]:
         """Convert Sequence[Row] to list[DishReadSchema]"""
         dish_schemas = []
@@ -125,7 +130,7 @@ class DishConverter:
     @staticmethod
     async def convert_dish_row_to_schema(
             dish_row_mapping: RowMapping,
-            dishes_discount: list[dict]
+            dishes_discount: RowMapping | list[dict] | None
     ) -> DishReadWithDiscountSchema:
         """Convert Row to DishReadSchema"""
         dish = dish_row_mapping.get('Dish')
