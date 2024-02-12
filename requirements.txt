@@ -13,4 +13,4 @@ starlette==0.35.1
 types-redis==4.6.0.20240106
 uvicorn==0.26.0
 celery==5.3.6
-openpyxl==3.1.2
+gspread==6.0.1

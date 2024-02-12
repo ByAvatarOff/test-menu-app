@@ -42,6 +42,7 @@
    tests/utils.py
    ```
 5) ### Обновление меню из google sheets раз в 15 сек.
+   ### Ссылка на гугл таблицу https://docs.google.com/spreadsheets/d/1oaWsiKStgxsrm_RcGWBKDTp1uAdaSE4mODiXNyr3XKk/
    ```
    src/celery_app/parser
    src/celery_app/update_db

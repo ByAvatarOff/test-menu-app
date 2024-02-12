@@ -249,12 +249,14 @@ class DBChanger(ExcelRedisKeys):
                 if db_dish_model not in self.excel_dishes:
                     await self.session.execute(delete(Dish).where(Dish.id == db_dish_model.get('id')))
                     await self.delete_by_pattern(self.redis_session, self.get_list_dishes_key)
+                    await self.delete_by_pattern(self.redis_session, self.get_list_menus_nested_key)
         elif len(self.db_dishes) < len(self.excel_dishes):
             for excel_dish in self.excel_dishes:
                 if excel_dish not in self.db_dishes:
                     await self.session.execute(insert(Dish).values(**excel_dish))
             await self.session.commit()
             await self.delete_by_pattern(self.redis_session, self.get_list_dishes_key)
+            await self.delete_by_pattern(self.redis_session, self.get_list_menus_nested_key)
 
     async def check_db_change(self) -> None:
         """Check db check_db_change"""
@@ -307,6 +309,7 @@ class DBUpdater(ExcelRedisKeys):
                 ))
                 await self.delete_by_pattern(self.redis_session, self.get_menu_key)
                 await self.delete_by_pattern(self.redis_session, self.get_list_menus_key)
+                await self.delete_by_pattern(self.redis_session, self.get_list_menus_nested_key)
         await self.session.commit()
         return True
 
@@ -326,6 +329,7 @@ class DBUpdater(ExcelRedisKeys):
                 await self.delete_by_pattern(self.redis_session, self.get_menu_key)
                 await self.delete_by_pattern(self.redis_session, self.get_submenu_key)
                 await self.delete_by_pattern(self.redis_session, self.get_list_submenus_key)
+                await self.delete_by_pattern(self.redis_session, self.get_list_menus_nested_key)
         await self.session.commit()
         return True
 
@@ -349,6 +353,7 @@ class DBUpdater(ExcelRedisKeys):
                 await self.delete_by_pattern(self.redis_session, self.get_submenu_key)
                 await self.delete_by_pattern(self.redis_session, self.get_dish_key)
                 await self.delete_by_pattern(self.redis_session, self.get_list_dishes_key)
+                await self.delete_by_pattern(self.redis_session, self.get_list_menus_nested_key)
         await self.session.commit()
         return True
 

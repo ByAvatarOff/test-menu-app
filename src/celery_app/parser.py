@@ -3,9 +3,10 @@ import pickle
 from pathlib import Path
 from uuid import uuid4
 
-import openpyxl
-from openpyxl import Workbook
-from openpyxl.worksheet.worksheet import Worksheet
+import gspread
+from gspread.client import Client
+from gspread.spreadsheet import Spreadsheet
+from gspread.worksheet import Worksheet
 
 from db.cache_repo import CacheMenuAppKeys
 from db.database import get_redis_session
@@ -15,8 +16,9 @@ class ExcelParser:
     """Excel menu parser"""
 
     def __init__(self) -> None:
-        self.wb: Workbook = openpyxl.load_workbook(Path(__file__).parents[2] / 'admin/Menu.xlsx', data_only=True)
-        self.sheet: Worksheet = self.wb.active
+        self.wb: Client = gspread.service_account(filename=Path(__file__).parents[2] / 'test_service.json')
+        self.sheets: Spreadsheet = self.wb.open('Menu')
+        self.sheet: Worksheet = self.sheets.get_worksheet(0)
         self.redis_session = get_redis_session()
         self.menu_app_keys = CacheMenuAppKeys()
 
@@ -28,40 +30,41 @@ class ExcelParser:
         dish_list_with_discount = []
         menu_id = ''
         submenu_id = ''
-        for rowNumber in range(1, self.sheet.max_row + 1):
-            if isinstance(self.sheet[f'A{rowNumber}'].value, int):
+        all_values = self.sheet.get_all_values()
+        for rowNumber, row in enumerate(all_values, start=1):
+            if row[0].isnumeric():
                 menu_id = uuid4()
                 menu_list.append(
                     {
                         'id': str(menu_id),
-                        'title': self.sheet[f'B{rowNumber}'].value,
-                        'description': self.sheet[f'C{rowNumber}'].value,
+                        'title': row[1],
+                        'description': row[2],
                     })
                 continue
-            if isinstance(self.sheet[f'B{rowNumber}'].value, int):
+            if row[1].isnumeric():
                 submenu_id = uuid4()
                 submenu_list.append(
                     {
                         'id': str(submenu_id),
-                        'title': self.sheet[f'C{rowNumber}'].value,
-                        'description': self.sheet[f'D{rowNumber}'].value,
+                        'title': row[2],
+                        'description': row[3],
                         'menu_id': str(menu_id),
                     })
                 continue
-            if isinstance(self.sheet[f'C{rowNumber}'].value, int):
+            if row[2].isnumeric():
                 dish_id = uuid4()
                 dish_list.append(
                     {
                         'id': str(dish_id),
-                        'title': self.sheet[f'D{rowNumber}'].value,
-                        'description': self.sheet[f'E{rowNumber}'].value,
-                        'price': str(self.sheet[f'F{rowNumber}'].value).replace(',', '.'),
+                        'title': row[3],
+                        'description': row[4],
+                        'price': str(row[5]).replace(',', '.'),
                         'submenu_id': str(submenu_id),
                     })
                 dish_list_with_discount.append(
                     {
-                        'title': self.sheet[f'D{rowNumber}'].value,
-                        'discount': self.sheet[f'G{rowNumber}'].value,
+                        'title': row[3],
+                        'discount': row[6],
                     }
                 )
                 continue
