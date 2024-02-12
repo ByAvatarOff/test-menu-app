@@ -57,11 +57,13 @@ async def list_menus_with_nested_obj(
 )
 async def create_menu(
         payload: MenuCreateSchema,
+        background_tasks: BackgroundTasks,
         menu_service: MenuService = Depends()
 ) -> MenuReadSchema:
     """Create menu"""
     return await menu_service.create_menu(
-        menu_payload=payload
+        menu_payload=payload,
+        background_tasks=background_tasks
     )
 
 
@@ -94,12 +96,14 @@ async def get_menu(
 async def update_menu(
         menu_id: UUID,
         payload: MenuCreateSchema,
+        background_tasks: BackgroundTasks,
         menu_service: MenuService = Depends()
 ) -> MenuReadSchema:
     """Update menu"""
     return await menu_service.update_menu(
         menu_id=menu_id,
-        menu_payload=payload
+        menu_payload=payload,
+        background_tasks=background_tasks,
     )
 
 

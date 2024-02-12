@@ -84,7 +84,7 @@ class DishReadWithDiscountSchema(BaseModel):
     title: str
     description: str
     price: str
-    discount: str
+    discount: str = Field(default='0%', alias='discount')
 
     @field_serializer('price')
     def convert_to_2_decimal_places(self, price):
@@ -120,7 +120,7 @@ class DishCreateSchema(BaseModel):
 
 class SubmenuReadNested(SubMenuReadSchema):
     """Schema for view all nester obj on dish table"""
-    dish: list[DishReadSchema]
+    dish: list[DishReadWithDiscountSchema]
 
 
 class MenuReadNested(MenuReadSchema):

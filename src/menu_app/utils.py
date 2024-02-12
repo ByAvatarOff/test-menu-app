@@ -144,6 +144,32 @@ class DishConverter:
         )
 
 
+async def add_discount_to_dish(
+        list_menus_nested: Sequence[Row],
+        dishes_discount: list[dict]
+) -> list[dict]:
+    """Add to every dish discount and calculate new price"""
+    list_menus_object: list = []
+    for (index, menu) in enumerate(list_menus_nested):
+        list_menus_object.append(
+            {
+                'id': menu.id, 'title': menu.title, 'description': menu.description, 'submenus': []
+            })
+        for (index_s, submenu) in enumerate(menu.submenus):
+            list_menus_object[index].get('submenus').append(
+                {'id': submenu.id, 'title': submenu.title, 'description': submenu.description, 'dish': []}
+            )
+            for dish in submenu.dish:
+                discount = await DishConverter.return_dish_discount(dish.title, dishes_discount)
+                list_menus_object[index].get('submenus')[index_s].get('dish').append(
+                    {
+                        'id': dish.id, 'title': dish.title, 'description': dish.description,
+                        'price': f'{Decimal(dish.price) * (1 - (discount / 100)):.2f}',
+                        'discount': f'{discount}%'
+                    })
+    return list_menus_object
+
+
 def concat_dicts(*dicts: dict) -> dict:
     """Concat getting dict to one dict"""
     return reduce(lambda dict_1, dict_2: {**dict_1, **dict_2}, dicts)

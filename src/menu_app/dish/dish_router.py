@@ -55,6 +55,7 @@ async def list_dishes(
 async def create_dish(
         submenu_id: UUID,
         payload: DishCreateSchema,
+        background_tasks: BackgroundTasks,
         dish_service: DishService = Depends()
 ) -> DishReadSchema:
     """
@@ -62,7 +63,8 @@ async def create_dish(
     """
     return await dish_service.create_dish(
         dish_payload=payload,
-        submenu_id=submenu_id
+        submenu_id=submenu_id,
+        background_tasks=background_tasks,
     )
 
 
@@ -100,6 +102,7 @@ async def get_dish(
 async def update_dish(
         dish_id: UUID,
         payload: DishCreateSchema,
+        background_tasks: BackgroundTasks,
         dish_service: DishService = Depends()
 ) -> DishReadSchema:
     """
@@ -107,7 +110,8 @@ async def update_dish(
     """
     return await dish_service.update_dish(
         dish_id=dish_id,
-        dish_payload=payload
+        dish_payload=payload,
+        background_tasks=background_tasks,
     )
 
 

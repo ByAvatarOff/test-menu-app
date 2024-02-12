@@ -50,17 +50,21 @@ class SubmenuService:
     async def create_submenu(
             self,
             menu_id: UUID,
-            submenu_payload: SubMenuCreateSchema
+            submenu_payload: SubMenuCreateSchema,
+            background_tasks: BackgroundTasks
     ) -> SubMenuReadSchema:
         """Create menu"""
         submenu = await self.submenu_repo.create_submenu(
             submenu_payload=submenu_payload,
             menu_id=menu_id
         )
-        await self.submenu_cache.delete_by_pattern(self.menu_app_name_keys.get_list_submenus_key)
-        await self.submenu_cache.delete(
-            [self.menu_app_name_keys.get_list_menus_nested_key]
+        background_tasks.add_task(
+            self.submenu_cache.delete_by_pattern,
+            self.menu_app_name_keys.get_list_submenus_key
         )
+        background_tasks.add_task(self.submenu_cache.delete, [
+            self.menu_app_name_keys.get_list_menus_nested_key,
+        ])
         return submenu
 
     async def get_submenu(
@@ -85,7 +89,8 @@ class SubmenuService:
     async def update_submenu(
             self,
             submenu_id: UUID,
-            submenu_payload: SubMenuCreateSchema
+            submenu_payload: SubMenuCreateSchema,
+            background_tasks: BackgroundTasks
     ) -> SubMenuReadSchema:
         """Update submenu by id"""
         submenu = await self.submenu_repo.update_submenu(
@@ -96,10 +101,14 @@ class SubmenuService:
             self.menu_app_name_keys.get_submenu_key,
             submenu_id
         )
-        await self.submenu_cache.delete_by_pattern(self.menu_app_name_keys.get_list_submenus_key)
-        await self.submenu_cache.delete([
+
+        background_tasks.add_task(
+            self.submenu_cache.delete_by_pattern,
+            self.menu_app_name_keys.get_list_submenus_key
+        )
+        background_tasks.add_task(self.submenu_cache.delete, [
             self.menu_app_name_keys.get_list_menus_nested_key,
-            submenu_key,
+            submenu_key
         ])
         return submenu
 

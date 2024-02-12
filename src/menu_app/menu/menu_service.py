@@ -7,7 +7,7 @@ from starlette.responses import JSONResponse
 from db.cache_repo import CacheMenuAppKeys, CacheRepository
 from menu_app.menu.menu_repo import MenuRepository
 from menu_app.schemas import MenuCreateSchema, MenuReadSchema, MenuWithCounterSchema
-from menu_app.utils import MenuConverter
+from menu_app.utils import MenuConverter, add_discount_to_dish
 
 
 class MenuService:
@@ -41,24 +41,32 @@ class MenuService:
     ):
         """list menus with nested obj"""
         cache_list_menu = await self.menu_cache.get(self.menu_app_name_keys.get_list_menus_nested_key)
+        dishes_discount = await self.menu_cache.get(self.menu_app_name_keys.get_dish_discount_key)
 
         if cache_list_menu is not None:
-            return cache_list_menu
+            return await add_discount_to_dish(cache_list_menu, dishes_discount)
 
         list_menus_nested = await self.menu_repo.get_all_menus_with_nested_obj()
         await self.menu_cache.set(self.menu_app_name_keys.get_list_menus_nested_key, list_menus_nested)
-        return list_menus_nested
+        return await add_discount_to_dish(list_menus_nested, dishes_discount)
 
     async def create_menu(
             self,
-            menu_payload: MenuCreateSchema
+            menu_payload: MenuCreateSchema,
+            background_tasks: BackgroundTasks,
     ) -> MenuReadSchema:
         """Create menu"""
         menu = await self.menu_repo.create_menu(
             menu_payload=menu_payload
         )
-        await self.menu_cache.delete_by_pattern(self.menu_app_name_keys.get_list_menus_key)
-        await self.menu_cache.delete([self.menu_app_name_keys.get_list_menus_nested_key])
+
+        background_tasks.add_task(self.menu_cache.delete, [
+            self.menu_app_name_keys.get_list_menus_nested_key,
+        ])
+        background_tasks.add_task(
+            self.menu_cache.delete_by_pattern,
+            self.menu_app_name_keys.get_list_menus_key
+        )
         return menu
 
     async def get_menu(
@@ -83,7 +91,8 @@ class MenuService:
     async def update_menu(
             self,
             menu_id: UUID,
-            menu_payload: MenuCreateSchema
+            menu_payload: MenuCreateSchema,
+            background_tasks: BackgroundTasks,
     ) -> MenuReadSchema:
         """Update menu by id"""
         menu = await self.menu_repo.update_menu(
@@ -94,11 +103,15 @@ class MenuService:
             self.menu_app_name_keys.get_menu_key,
             menu_id
         )
-        await self.menu_cache.delete_by_pattern(self.menu_app_name_keys.get_list_menus_key)
-        await self.menu_cache.delete([
+
+        background_tasks.add_task(self.menu_cache.delete, [
             self.menu_app_name_keys.get_list_menus_nested_key,
             menu_key
-        ]
+        ])
+
+        background_tasks.add_task(
+            self.menu_cache.delete_by_pattern,
+            self.menu_app_name_keys.get_list_menus_key
         )
         return menu
 

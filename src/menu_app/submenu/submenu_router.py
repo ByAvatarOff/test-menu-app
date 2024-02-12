@@ -53,12 +53,14 @@ async def list_submenus(
 async def create_submenu(
         menu_id: UUID,
         payload: SubMenuCreateSchema,
+        background_tasks: BackgroundTasks,
         submenu_service: SubmenuService = Depends()
 ) -> SubMenuReadSchema:
     """Create submenu"""
     return await submenu_service.create_submenu(
         submenu_payload=payload,
-        menu_id=menu_id
+        menu_id=menu_id,
+        background_tasks=background_tasks,
     )
 
 
@@ -94,12 +96,14 @@ async def get_submenu(
 async def update_submenu(
         submenu_id: UUID,
         payload: SubMenuCreateSchema,
+        background_tasks: BackgroundTasks,
         submenu_service: SubmenuService = Depends()
 ) -> SubMenuReadSchema:
     """Update submenu"""
     return await submenu_service.update_submenu(
         submenu_id=submenu_id,
-        submenu_payload=payload
+        submenu_payload=payload,
+        background_tasks=background_tasks,
     )
 
 

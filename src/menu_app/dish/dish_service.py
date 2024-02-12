@@ -54,17 +54,21 @@ class DishService:
     async def create_dish(
             self,
             submenu_id: UUID,
-            dish_payload: DishCreateSchema
+            dish_payload: DishCreateSchema,
+            background_tasks: BackgroundTasks
     ) -> DishReadSchema:
         """Create dish"""
         dish = await self.dish_repo.create_dish(
             dish_payload=dish_payload,
             submenu_id=submenu_id
         )
-        await self.dish_cache.delete_by_pattern(self.menu_app_name_keys.get_list_dishes_key)
-        await self.dish_cache.delete(
-            [self.menu_app_name_keys.get_list_menus_nested_key],
+        background_tasks.add_task(
+            self.dish_cache.delete_by_pattern,
+            self.menu_app_name_keys.get_list_dishes_key
         )
+        background_tasks.add_task(self.dish_cache.delete, [
+            self.menu_app_name_keys.get_list_menus_nested_key,
+        ])
         return dish
 
     async def get_dish(
@@ -90,7 +94,8 @@ class DishService:
     async def update_dish(
             self,
             dish_id: UUID,
-            dish_payload: DishCreateSchema
+            dish_payload: DishCreateSchema,
+            background_tasks: BackgroundTasks
     ) -> DishReadSchema:
         """Update dish by id"""
         dish = await self.dish_repo.update_dish(
@@ -101,10 +106,14 @@ class DishService:
             self.menu_app_name_keys.get_dish_key,
             dish_id
         )
-        await self.dish_cache.delete_by_pattern(self.menu_app_name_keys.get_list_dishes_key)
-        await self.dish_cache.delete([
+
+        background_tasks.add_task(
+            self.dish_cache.delete_by_pattern,
+            self.menu_app_name_keys.get_list_dishes_key
+        )
+        background_tasks.add_task(self.dish_cache.delete, [
             self.menu_app_name_keys.get_list_menus_nested_key,
-            dish_key
+            dish_key,
         ])
         return dish
 
